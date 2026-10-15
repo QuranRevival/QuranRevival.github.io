@@ -5,7 +5,7 @@ import { chromium } from "playwright";
 
 const TEAL = "#0f4c4c", GOLD = "#d8b25a", DEEP = "#0b3a3a";
 /** `scale` = the star's share of the canvas (a maskable icon keeps it inside the 80% safe circle). */
-function svg(size, scale) {
+export function svg(size, scale) {
   const c = size / 2, r = (size * scale) / 2, s = r * Math.SQRT1_2 * 1.0; // half-side of each square
   const sq = (rot) => `<rect x="${c - s}" y="${c - s}" width="${2 * s}" height="${2 * s}" transform="rotate(${rot} ${c} ${c})"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
@@ -24,6 +24,7 @@ const OUT = [
   ["app/img/asma-icon-maskable-512.png", 512, 0.6],
   ["app/img/asma-apple-touch-icon.png", 180, 0.72],
 ];
+if (import.meta.url === `file://${process.argv[1]}`) {
 const browser = await chromium.launch();
 try {
   for (const [file, size, scale] of OUT) {
@@ -34,3 +35,4 @@ try {
     console.log(file);
   }
 } finally { await browser.close(); }
+}
