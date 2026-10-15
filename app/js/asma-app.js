@@ -40,6 +40,7 @@ export const POSTER_INLINE = true;
 const HADITH_LIBRARY = "https://madrasatul-muslimeen.github.io/app/hadith-collections.html";
 const CITED_HADITH_URL = "../tools/hadith-data-pull/output/asma-cited-hadith.json";
 const STUDIED_KEY = "qr_asma_studied_v1";
+const SCROLL_KEY = "qr_asma_scroll"; // sessionStorage: this tab's place on the page, for the way back
 
 // ---------------------------------------------------------------------------------------------------------------
 // The poster's own stylesheet, WITHOUT its Google Fonts link. asma-poster.js adds both the first time a poster is
@@ -130,6 +131,15 @@ function backTo(parent) {
   else nav(parent, { replace: true });
 }
 addEventListener("popstate", () => show(parseRoute()));
+addEventListener("pagehide", () => {
+  try { sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ hash: location.hash, y: Math.round(scrollY) })); } catch { /* storage blocked */ }
+});
+/** The way back's place, again, now that more of the page is here (see the first paint, at the end). */
+function retryRestore() {
+  if (restoreY == null) return;
+  scrollTo(0, restoreY);
+  if (Math.abs(scrollY - restoreY) < 2) restoreY = null;
+}
 
 // ---------------------------------------------------------------------------------------------------------------
 // The page frame: tabs, language and look.
@@ -440,6 +450,7 @@ async function renderCitedAyat(entry, token) {
     }
     gloss.textContent = b.getAttribute("aria-label");
   }));
+  retryRestore();
 }
 
 let citedHadithPromise = null;
@@ -491,6 +502,7 @@ async function renderCitedHadith(entry, token) {
     ? `<p class="hint qa-credit"><a href="${esc(OPENITI_CREDIT_URL)}" target="_blank" rel="noopener noreferrer">${esc(tr("Arabic text: OpenITI ({licence})", { licence: OPENITI_LICENCE }))}</a></p>`
     : "");
   pointAtLibrary(section);
+  retryRestore();
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -544,7 +556,19 @@ addEventListener("resize", () => { cancelAnimationFrame(fitting); fitting = requ
 // First paint: the address decides the view (a reload keeps the reader where they were).
 history.replaceState({ r: current, from: history.state?.from ?? null }, "", routeHash(current));
 if (current.v === "name" || current.v === "poster") lastOpenedName = current.n;
+// Way back from another page (About, the Hadith library): the browser reloads this page, and a Name's āyāt and
+// hadith arrive a moment later, so the browser's own scroll restore lands short. The place is kept here instead,
+// and set again as each part arrives, until the page is long enough to reach it.
+try { history.scrollRestoration = "manual"; } catch { /* old browser */ }
+let restoreY = null;
+try {
+  const saved = JSON.parse(sessionStorage.getItem(SCROLL_KEY) || "null");
+  const nav = performance.getEntriesByType?.("navigation")?.[0]?.type;
+  if (saved && saved.hash === location.hash && (nav === "back_forward" || nav === "reload")) restoreY = saved.y;
+} catch { /* storage blocked */ }
+if (restoreY != null) scrollByRoute.set(routeHash(current), restoreY);
 show(current);
+retryRestore();
 document.documentElement.classList.add("qa-ready");
 
 // ---------------------------------------------------------------------------------------------------------------

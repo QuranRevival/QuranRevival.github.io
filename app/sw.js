@@ -17,6 +17,7 @@ const SURAH_PATH = "/tools/quran-data-pull/output/surahs/";
 // page reaches, every font, image, stylesheet and data file it uses.
 const PRECACHE = [
   "asma.html",
+  "asma-about.html",
   "asma.webmanifest",
   "css/asma.css",
   "css/qr-fonts.css",
@@ -33,6 +34,7 @@ const PRECACHE = [
   "img/asma-icon-512.png",
   "img/asma-icon-maskable-512.png",
   "img/asma-apple-touch-icon.png",
+  "js/asma-about.js",
   "js/asma-app-strings.js",
   "js/asma-app.js",
   "js/asma-cited-ayat.js",

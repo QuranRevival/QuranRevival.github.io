@@ -30,6 +30,7 @@ const BN = Object.freeze({
   "Studied ticks stay on this device only.": "পড়া হয়েছে চিহ্নগুলো শুধু এই ডিভাইসে থাকে।",
   "Name not found.": "নামটি পাওয়া যায়নি।",
   "Save all āyāt for offline use (19 MB)": "সব আয়াত অফলাইনের জন্য রাখুন (১৯ MB)",
+  "About and privacy": "পরিচিতি ও গোপনীয়তা",
   "Saving… {n} of {total}": "রাখা হচ্ছে… {total}টির মধ্যে {n}",
   "Ready for offline use ✓": "অফলাইনে ব্যবহারের জন্য প্রস্তুত ✓",
   "Some could not be saved. Check the connection and try again.": "কিছু রাখা যায়নি। সংযোগ দেখে আবার চেষ্টা করুন।",
