@@ -61,9 +61,9 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
   owner's groups (group 19 shown as "Other Names").
 - **Files:** `screensaver-idle.js` and `asma-posters.js` copied byte-identical. `asma-screensaver.js` could NOT be
   kept identical (it imports `session-context.js`, so Firebase): `app/js/asma-screensaver-qr.js` is GENERATED from it
-  by `tools/qr-asma/make-screensaver.mjs <MMSA checkout>` with 8 listed edits (no Firebase; the Names come from the
+  by `tools/qr-asma/make-screensaver.mjs <MMSA checkout>` with 10 listed edits (no Firebase; the Names come from the
   app; "Open this Name" opens it here; ⚙ restarts through QR's watcher; a tap or key closes it; no "Where it may
-  start" row). `--check` proves the file is exactly that. `app/js/qr-screensaver.js` is QR's watcher (MMSA's
+  start" row; R4: the bar's "Open" fits one line, full words as its label). `--check` proves the file is exactly that. `app/js/qr-screensaver.js` is QR's watcher (MMSA's
   `armScreensaver` logic, loading the QR copy); nothing loads until it first starts.
 - **Opening and closing:** 🌙 beside the tabs, and "Screensaver settings" in the footer. A tap on the poster or any
   key (except ← → space) closes it; the page under it never changed, so the reader is exactly where they were.
@@ -71,10 +71,23 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
   (🌙 still opens it). The browser suites set the first.
 - **Photo posters** come from archive.org (MMSA's set): online only; offline, the template posters show.
 
+## Store-ready check (QR J01 R4)
+
+- `app/asma-about.html` ("About and privacy", EN and BN, linked from the app's footer, saved for offline): what the
+  app is, that it collects nothing, how to clear what it keeps, the credits, the contact.
+- The manifest has every field a store or an install needs, 4 screenshots from the real app
+  (`tools/qr-icons/make-asma-screens.mjs` writes `app/img/screens/`), and 2 shortcuts.
+- `tools/qr-verify/asma-store-browser.mjs` checks the manifest and its files, the maskable icon's safe zone on its
+  pixels, Chromium's own installability verdict, and the About page (also offline). The verdict needs the FULL
+  Chromium (`channel: "chromium"`, a real profile): Playwright's default headless shell says "no errors" for any page.
+- The owner's tick list for a store: `docs/ASMA-STORE-READY.md`.
+- The way back from another page (About, the Hadith library) now returns to the same place even while a Name's āyāt
+  are still loading (the place is kept in sessionStorage and set again as each part arrives).
+
 ## Versions
 
 Every change to a file the worker saves bumps `APP_VERSION` in `app/js/qr-version.js` (standing rule, QR Architect).
-00.01 = R2 (offline); 00.02 = R3 (screensaver).
+00.01 = R2 (offline); 00.02 = R3 (screensaver); 00.03 = R4 (About and privacy page, manifest screenshots).
 
 ## Never changes (shared with MMSA)
 
@@ -111,6 +124,8 @@ the signed-in QR (QR J02).
   switches. `--mutate=precache|cleanup|skipwaiting` must fail.
 - `node tools/qr-verify/asma-screensaver-browser.mjs`: the screensaver at 390/1400, EN/BN, Night/Light (settings kept,
   speed, group order, tap/key closes to the same place). `--mutate=tapclose|persist|speed` must fail.
+- `node tools/qr-verify/asma-store-browser.mjs`: manifest, icons, screenshots, installability (full Chromium), the About
+  page at 390/1400, EN/BN, and offline. `--mutate=maskable|noicon|browser|aboutoffline` must fail.
 - `node tools/qr-asma/make-screensaver.mjs <MMSA checkout> --check`: the QR screensaver is MMSA's plus the 8 edits.
 - `node tools/qr-verify/asma-local-sync.mjs <MMSA checkout>`: `app/js/asma-local.js` still matches MMSA, function by function.
 

@@ -119,6 +119,15 @@ async function run(width, lang, look) {
   await page.mouse.move(width / 2, 200);
   await page.mouse.move(width / 2 + 5, 205);
   await tapTargets(page, "#mmSaver .mms-ctl, #mmSaver .mms-top", `${tag} screensaver controls`);
+  const bar = await page.evaluate(() => {
+    const lines = (el) => { const r = document.createRange(); r.selectNodeContents(el); return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size; };
+    const btns = [...document.querySelectorAll("#mmSaver .mms-ctl button")].filter((b) => !b.hidden);
+    const box = document.querySelector("#mmSaver .mms-ctl").getBoundingClientRect();
+    const open = document.querySelector('#mmSaver [data-mms="open"]');
+    return { multi: btns.filter((b) => lines(b) > 1).map((b) => b.textContent.trim()), left: box.left, right: box.right, open: open.textContent.trim(), openLabel: open.getAttribute("aria-label") };
+  });
+  check(bar.multi.length === 0 && bar.left >= 0 && bar.right <= width, `${tag} the bar's buttons each fit on one line, inside the screen${bar.multi.length ? ": " + bar.multi.join(", ") + " wrap" : ""}`);
+  check(bar.open === (lang === "bn" ? "খুলুন" : "Open") && /Name|নাম/.test(bar.openLabel ?? ""), `${tag} "${bar.open}" carries its full words "${bar.openLabel}" for screen readers`);
   await page.waitForTimeout(2500);
   check(await shown(page) === first, `${tag} the poster stays while its 5 seconds run`);
   await page.waitForFunction((n) => Number(document.querySelector("#mmSaver .mms-slide.on .ahp")?.dataset.asmaPoster) !== n, first, { timeout: 6000 }).catch(() => {});
