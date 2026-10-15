@@ -33,6 +33,23 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
 Firebase project `study-monitoring`, the Firestore Rules, the records/activity paths, unit keys and the four
 person-id shapes (handover pack section 1). QR never edits or deploys the Rules and never makes a second database.
 
+## R1 design note (measured on MMSA 077b4db, 16 Oct 8:17 am; re-measure on the commit the PCA gives)
+
+Asma without sign-in (QR J01, owner's J61 Q5 = A) gets its OWN page, `app/asma.html`, rather than a switched-off
+`asma-study.html`. The reading core needs no Firebase at all:
+
+| Module | Scripts it reaches | Firebase? |
+|---|---|---|
+| `asma-renderer.js` | 12 | no |
+| `asma-descriptions.js`, `asma-cited-ayat.js`, `asma-cited-hadith.js`, `asma-wheel-text.js` | 8, 1, 5, 5 | no |
+| `asma-data.js`, `asma-poster.js`, `asma-posters.js`, `i18n.js`, `prefs.js`, `lang.js` | 0 to 5 | no |
+| `asma-study.js` (the signed-in page) | 44 | YES (records, activity, bookmarks, collections) |
+| `asma-screensaver.js` | 24 | YES (through `asma-collections.js`, `session-context.js`) |
+
+So `app/asma.html` imports only the first three rows, makes no network call to Firebase, and keeps "Studied" on
+the phone. The screensaver (R3) needs a phone-only path for its collections. `asma-study.html` stays as it is for
+the signed-in QR (QR J02).
+
 ## Checks (from the repository root)
 
 - `npm test`: the naming check, then every page at 390 and 1400 wide, Light and Night (loads, title, no page errors,
