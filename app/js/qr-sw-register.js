@@ -1,0 +1,78 @@
+// QR J01 R2 (QR-only): registers app/sw.js for the Asma page, and nothing else. MMSA's sw-register.js is not used.
+//
+// Kill switches, as in MMSA: ?nosw in the address, or localStorage mm_disable_service_worker = "1". Either one
+// unregisters the worker and skips registering it (the page then works straight from the network).
+// A new version never swaps in by itself: onUpdateReady() is told, the page shows a quiet note, and only
+// applyUpdate() (the reader's tap on Reload) lets the new worker take over and reloads once.
+
+export const QURAN_CACHE = "qr-quran-v1";
+
+export function serviceWorkerSwitchedOff() {
+  if (new URLSearchParams(location.search).has("nosw")) return true;
+  try { return localStorage.getItem("mm_disable_service_worker") === "1"; } catch { return false; }
+}
+
+let waitingWorker = null;
+let reloadAsked = false;
+
+export async function registerQrServiceWorker({ onUpdateReady } = {}) {
+  if (!("serviceWorker" in navigator)) return null;
+  if (serviceWorkerSwitchedOff()) {
+    const regs = await navigator.serviceWorker.getRegistrations().catch(() => []);
+    await Promise.all(regs.map((r) => r.unregister()));
+    return null;
+  }
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (reloadAsked) location.reload(); });
+  try {
+    const { APP_VERSION } = await import("./qr-version.js");
+    const reg = await navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(APP_VERSION)}`, { scope: "./" });
+    const tell = (w) => { if (w && navigator.serviceWorker.controller) { waitingWorker = w; onUpdateReady?.(w); } };
+    tell(reg.waiting);
+    reg.addEventListener("updatefound", () => {
+      const w = reg.installing;
+      w?.addEventListener("statechange", () => { if (w.state === "installed") tell(w); });
+    });
+    return reg;
+  } catch (err) {
+    console.warn("Offline use is not available in this browser:", err?.message ?? err);
+    return null;
+  }
+}
+
+/** The reader tapped Reload: the waiting version takes over, then the page reloads once. */
+export function applyUpdate() {
+  if (!waitingWorker) { location.reload(); return; }
+  reloadAsked = true;
+  waitingWorker.postMessage({ type: "SKIP_WAITING" });
+}
+
+/** How many of `urls` are saved for offline use. */
+export async function countSaved(urls) {
+  if (!("caches" in self)) return 0;
+  const cache = await caches.open(QURAN_CACHE);
+  let n = 0;
+  for (const u of urls) if (await cache.match(u, { ignoreSearch: true })) n++;
+  return n;
+}
+
+/** Saves every one of `urls` for offline use, four at a time; onProgress(done, total). Resolves to the number
+ *  that could not be saved (0 = all saved). */
+export async function saveForOffline(urls, onProgress) {
+  const cache = await caches.open(QURAN_CACHE);
+  let done = 0, failed = 0, next = 0;
+  const worker = async () => {
+    while (next < urls.length) {
+      const u = urls[next++];
+      try {
+        if (!(await cache.match(u, { ignoreSearch: true }))) {
+          const res = await fetch(u, { cache: "reload" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          await cache.put(u, res);
+        }
+      } catch { failed++; }
+      onProgress?.(++done, urls.length);
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  return failed;
+}
