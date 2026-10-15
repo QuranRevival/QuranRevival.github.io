@@ -1,0 +1,105 @@
+// QR J02 S1: Quran Study (app/quranrevival.html) and LDOG (app/ldog-study.html), copied from MMSA unchanged, run on
+// QR's own server, signed in through MMSA's own test harness (tools/i18n-verify/harness.mjs and firebase-stub.mjs,
+// copied byte-identical: Firebase is faked at the network layer, so the pages' real code runs).
+// At 390 and 1400: each page loads with no page errors; the Quran wheel; the Read view of Al-Fatiha; an Āyah card;
+// the LDOG routine list. Console errors are listed (not failed): QR does not have every page MMSA's pages link to.
+//
+//   node tools/qr-verify/quran-ldog-browser.mjs     (serves itself on PORT, default 8097)
+import { spawn } from "node:child_process";
+
+const PORT = Number(process.env.PORT) || 8097;
+let server = null;
+if (!process.env.QR_BASE) {
+  server = spawn(process.execPath, ["serve.js"], { env: { ...process.env, PORT: String(PORT) }, stdio: "ignore" });
+  process.env.QR_BASE = `http://localhost:${PORT}`;
+  await new Promise((r) => setTimeout(r, 400));
+}
+const { chromium, newContext, openPage } = await import("../i18n-verify/harness.mjs");
+
+let pass = 0, fail = 0;
+const check = (ok, what) => {
+  if (ok instanceof Promise) throw new Error(`check() was handed a promise: ${what}`);
+  ok ? pass++ : fail++;
+  console.log(`${ok ? "ok  " : "FAIL"} ${what}`);
+};
+const consoleNotes = new Map();
+const browser = await chromium.launch();
+try {
+  for (const width of [390, 1400]) {
+    for (const [name, fn] of [["quran", quran], ["ldog", ldog]]) {
+      try { await fn(width); } catch (err) { check(false, `${name} @${width} stopped early: ${String(err.message).split("\n")[0]}`); }
+    }
+  }
+} finally {
+  await browser.close();
+  server?.kill();
+}
+if (consoleNotes.size) console.log(`\nConsole errors and failed requests seen (listed, not failed):\n${[...consoleNotes].map(([k, n]) => `  ${n}x ${k}`).join("\n")}`);
+console.log(`\n${pass} passed, ${fail} failed`);
+process.exit(fail ? 1 : 0);
+
+function track(page) {
+  const pageErrors = [];
+  page.on("pageerror", (e) => pageErrors.push(e.message));
+  page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource/.test(m.text())) { const k = m.text().slice(0, 140); consoleNotes.set(k, (consoleNotes.get(k) ?? 0) + 1); } });
+  page.on("response", (r) => { if (r.status() >= 400) { const k = `HTTP ${r.status()} ${r.url().replace(process.env.QR_BASE, "")}`; consoleNotes.set(k, (consoleNotes.get(k) ?? 0) + 1); } });
+  return pageErrors;
+}
+
+async function quran(width) {
+  const tag = `quranrevival.html @${width}`;
+  const ctx = await newContext(browser, { viewport: { width, height: width < 600 ? 844 : 900 } });
+  await ctx.route("**/archive.org/**", (r) => r.abort());
+  const page = await ctx.newPage();
+  const pageErrors = track(page);
+  await page.goto(`${process.env.QR_BASE}/app/quranrevival.html`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => document.querySelectorAll('[id*="splash"], .app-splash-overlay, .mm-splash-overlay').forEach((e) => e.remove()));
+  check(/^v\d+\.\d+$/.test(await page.locator("#appVersion").innerText().catch(() => "")), `${tag} the page's code runs (version ${await page.locator("#appVersion").innerText().catch(() => "?")})`);
+  const signedIn = await page.evaluate(() => !/Checking sign-in/.test(document.getElementById("who")?.textContent ?? ""));
+  check(signedIn, `${tag} signed in (faked)`);
+  await page.waitForSelector("#wheelSection svg.mastery-wheel .wheel-seg, #wheelSection svg .wheel-seg", { timeout: 15000 }).catch(() => {});
+  const segs = await page.locator("#wheelSection .wheel-seg").count();
+  check(segs > 0, `${tag} the wheel draws (${segs} slices)`);
+  await page.evaluate(() => document.getElementById("tabReadBtn").click());
+  await page.waitForFunction(() => !document.getElementById("readView").hidden && document.getElementById("ayahPanels").textContent.trim().length > 20, null, { timeout: 15000 }).catch(() => {});
+  const read = await page.evaluate(() => ({ sel: ["readSurahSelect", "readAyahSelect"].map((i) => document.getElementById(i)?.value).join(":"), text: document.getElementById("ayahPanels")?.textContent ?? "" }));
+  check(read.sel === "1:1" && /بِسْمِ|ٱللَّهِ|الحمد|ٱلْحَمْدُ/.test(read.text), `${tag} the Read view shows Al-Fatiha (${read.sel})`);
+  // The Āyah card, the way MMSA's audit part 12 opens it: āyah 36:38, then its number badge.
+  await page.evaluate(() => { const el = document.getElementById("surahSelect"); el.value = "36"; el.dispatchEvent(new Event("change", { bubbles: true })); });
+  await page.waitForFunction(() => document.querySelector('#readView [data-ayah-num-badge^="36:"]') || document.querySelector('#readView [data-word-occurrence^="quran-word-occurrence:v1:36:"]'), null, { timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => { const el = document.getElementById("ayahSelect"); el.value = "38"; el.dispatchEvent(new Event("change", { bubbles: true })); });
+  await page.waitForTimeout(900);
+  await page.evaluate(() => document.querySelector('[data-ayah-num-badge="36:38"]')?.click());
+  await page.waitForFunction(() => document.querySelector("[data-ayah-sheet] .ayah-sheet-ref"), null, { timeout: 10000 }).catch(() => {});
+  const card = await page.evaluate(() => ({ open: document.getElementById("ayahActionSheetOverlay")?.classList.contains("open"), unit: document.querySelector("[data-ayah-sheet]")?.dataset.unitKey }));
+  check(card.open && card.unit === "ayah:36:38", `${tag} the Āyah card opens (${JSON.stringify(card)})`);
+  const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  check(sw <= cw, `${tag} no sideways scroll (${sw} <= ${cw})`);
+  check(pageErrors.length === 0, `${tag} no page errors${pageErrors.length ? ": " + pageErrors.join(" | ") : ""}`);
+  await ctx.close();
+}
+
+async function ldog(width) {
+  const tag = `ldog-study.html @${width}`;
+  // MMSA's stub seeds no LDOG subjects; these two follow catalogue-data.js's own LDOG rows (root + first child).
+  const extraSeedJs = `
+DATA.subjects.push(
+  { _id: TENANT_ID + "__ldog", tenantId: TENANT_ID, subjectId: "ldog", parentId: null, name: lang("Learn Deen On-the-Go"), moduleIds: ["ldog"], ancestorIds: [], status: "active", order: 9 },
+  { _id: TENANT_ID + "__daily_deen_habit", tenantId: TENANT_ID, subjectId: "daily_deen_habit", parentId: "ldog", name: lang("Daily Deen Learning Habit for Life"), moduleIds: ["ldog"], ancestorIds: ["ldog"], status: "active", order: 1, isTrackable: true }
+);`;
+  const ctx = await newContext(browser, { viewport: { width, height: width < 600 ? 844 : 900 }, extraSeedJs });
+  const page = await ctx.newPage();
+  const pageErrors = track(page);
+  await page.goto(`${process.env.QR_BASE}/app/ldog-study.html`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1200);
+  await page.waitForFunction(() => getComputedStyle(document.getElementById("app")).display !== "none", null, { timeout: 15000 }).catch(() => {});
+  check(await page.evaluate(() => getComputedStyle(document.getElementById("app")).display !== "none"), `${tag} the signed-in app shows (faked sign-in)`);
+  await page.waitForFunction(() => (document.getElementById("listContainer")?.textContent.trim().length ?? 0) > 20, null, { timeout: 15000 }).catch(() => {});
+  const list = await page.evaluate(() => ({ text: document.getElementById("listContainer")?.textContent.trim() ?? "", items: document.querySelectorAll("#listContainer button, #listContainer a, #listContainer [data-key], #listContainer li").length }));
+  check(list.text.length > 20 && list.items > 0, `${tag} the routine list shows (${list.items} items: "${list.text.slice(0, 60)}…")`);
+  const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  check(sw <= cw, `${tag} no sideways scroll (${sw} <= ${cw})`);
+  check(pageErrors.length === 0, `${tag} no page errors${pageErrors.length ? ": " + pageErrors.join(" | ") : ""}`);
+  await ctx.close();
+}
