@@ -1,7 +1,8 @@
 // Lists every script a page reaches through its imports (from the MMSA handover pack, section 6).
 // Run from the root of a checkout: node tools/qr-verify/import-walk.mjs asma-study.html ldog-study.html
 import fs from "node:fs"; import path from "node:path";
-const re = /(?:import\s[^'"]*?from\s*|import\s*\(\s*|import\s+)["'](\.{1,2}\/[^"']+\.js)["']/g;
+// QR J02 S1: also "export { x } from './y.js'" (a re-export loads y.js too; the handover's walk missed it).
+const re = /(?:(?:import|export)\s[^'"]*?from\s*|import\s*\(\s*|import\s+)["'](\.{1,2}\/[^"']+\.js)["']/g;
 function walk(file, seen) {
   if (seen.has(file)) return; seen.add(file);
   for (const m of fs.readFileSync(file, "utf8").matchAll(re)) {

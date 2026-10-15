@@ -70,7 +70,19 @@ const PRECACHE = [
   "../tools/hadith-data-pull/output/asma-cited-hadith.json",
 ];
 
+// ONE worker for /app/ (QR J02 S1). MMSA's pages copied into QR (Quran Study, LDOG) call MMSA's sw-register.js,
+// unchanged, which registers "/app/sw.js" as a MODULE worker with no ?v=. Measured: that turned THIS file into a
+// second, "dev" version of itself (cache qr-app-dev) and the two then took turns waiting, each page offering an
+// update the other undid. So a copy started without ?v= (only MMSA's register does that; QR's own always passes
+// one) refuses to install: the Asma worker already running stays, and a first visit to those pages installs
+// nothing. QR's full worker for every page comes in QR J02 S3.
+const STARTED_BY_QR = new URL(self.location.href).searchParams.has("v");
+
 self.addEventListener("install", (event) => {
+  if (!STARTED_BY_QR) {
+    event.waitUntil(Promise.reject(new Error("QR's worker is registered by app/js/qr-sw-register.js only.")));
+    return;
+  }
   // Straight from the network (not the browser's HTTP cache), so a new version never saves an old file.
   event.waitUntil(caches.open(APP_CACHE).then((cache) => cache.addAll(PRECACHE.map((p) => new Request(p, { cache: "reload" })))));
 });
