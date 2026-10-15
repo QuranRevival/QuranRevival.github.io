@@ -68,6 +68,10 @@ function stopServer() {
   return new Promise((r) => server.close(() => r()));
 }
 const base = `http://localhost:${PORT}`;
+// The version on disk, and the one a "new version" is simulated with (the next number).
+const V1 = fs.readFileSync("app/js/qr-version.js", "utf8").match(/APP_VERSION = "([\d.]+)"/)[1];
+const V2 = (Number(V1) + 0.01).toFixed(2).padStart(5, "0");
+const reV = (v) => v.replace(".", "\\.");
 
 // ---- 1. Static: the list the worker saves covers everything the page uses. ----
 const swSrc = fs.readFileSync("app/sw.js", "utf8");
@@ -129,9 +133,9 @@ async function runWidth(width) {
   await page.goto(`${base}/app/asma.html`, { waitUntil: "load" });
   await controlled(page);
   const caches1 = await cacheReport(page);
-  check(caches1["qr-app-00.01"] === precache.length, `${tag} the worker saved the page's ${precache.length} files in qr-app-00.01 (${caches1["qr-app-00.01"]})`);
+  check(caches1[`qr-app-${V1}`] === precache.length, `${tag} the worker saved the page's ${precache.length} files in qr-app-${V1} (${caches1[`qr-app-${V1}`]})`);
   const sw = await page.evaluate(() => navigator.serviceWorker.controller.scriptURL);
-  check(/\/app\/sw\.js\?v=00\.01$/.test(sw), `${tag} the worker is app/sw.js?v=00.01 (${sw.replace(base, "")})`);
+  check(new RegExp(`/app/sw\\.js\\?v=${reV(V1)}$`).test(sw), `${tag} the worker is app/sw.js?v=${V1} (${sw.replace(base, "")})`);
   const scope = await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).scope);
   check(scope === `${base}/app/`, `${tag} its scope is /app/`);
   check(await page.locator("[data-qa-update]").isHidden(), `${tag} no "new version" note on a first visit`);
@@ -175,6 +179,13 @@ async function runWidth(width) {
   await page.click("[data-qa-prev]");
   await page.waitForSelector('[data-qa-detail="1"]', { timeout: 3000 }).catch(() => {});
   check(two === 1 && await page.locator('[data-qa-detail="1"]').count() === 1, `${tag} offline: › and ‹`);
+  // The 🌙 screensaver, offline: its code was saved at install, and the template posters need nothing else.
+  await page.click("[data-qa-saver]");
+  await page.waitForSelector("#mmSaver .mms-slide.on .ahp", { timeout: 8000 }).catch(() => {});
+  check(await page.locator("#mmSaver .mms-slide.on .ahp").count() >= 1, `${tag} offline: the 🌙 screensaver opens with a poster`);
+  await page.keyboard.press("Escape");
+  await page.waitForSelector("#mmSaver", { state: "detached", timeout: 3000 }).catch(() => {});
+  check(await page.locator("#mmSaver").count() === 0 && await page.locator('[data-qa-detail="1"]').count() === 1, `${tag} offline: closing it returns to Name 1`);
   await page.goto(`${base}/app/asma.html#v=name&n=20`, { waitUntil: "load" });
   await page.waitForSelector("#qaCitedHadith .asmax-cited-hadith-ar", { timeout: 8000 }).catch(() => {});
   const had = (await page.locator("#qaCitedHadith .asmax-cited-hadith-ar").first().innerText().catch(() => "")).trim();
@@ -208,27 +219,27 @@ async function versionBump() {
   await controlled(page);
   await page.evaluate(async () => { await (await caches.open("mm-app-11.04")).put("/x", new Response("x")); await (await caches.open("someone-else")).put("/x", new Response("x")); });
   const before = await cacheReport(page);
-  check(!!before["qr-app-00.01"] && "qr-quran-v1" in before, `update: before, qr-app-00.01 and qr-quran-v1 (${Object.keys(before).join(", ")})`);
+  check(!!before[`qr-app-${V1}`] && "qr-quran-v1" in before, `update: before, qr-app-${V1} and qr-quran-v1 (${Object.keys(before).join(", ")})`);
 
-  overrides.set("/app/js/qr-version.js", (t) => t.replace('APP_VERSION = "00.01"', 'APP_VERSION = "00.02"'));
+  overrides.set("/app/js/qr-version.js", (t) => t.replace(`APP_VERSION = "${V1}"`, `APP_VERSION = "${V2}"`));
   const marker = await page.evaluate(() => (window.__qrMarker = Math.random()));
   await page.reload({ waitUntil: "load" });
   await page.waitForSelector("[data-qa-update]:not([hidden])", { timeout: 30000 }).catch(() => {});
   check(await page.locator("[data-qa-update]").isVisible(), `update: "A new version is ready · Reload" shows`);
   const still = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL ?? "");
-  check(/v=00\.01$/.test(still), `update: the page keeps running the version it opened with until Reload (${still.replace(base, "")})`);
+  check(still.endsWith(`v=${V1}`), `update: the page keeps running the version it opened with until Reload (${still.replace(base, "")})`);
   const note = page.locator("[data-qa-update] button");
   const nb = await note.boundingBox();
   check(nb && nb.height >= 40, `update: Reload is finger-sized (${Math.round(nb?.height ?? 0)}px)`);
   const mid = await cacheReport(page);
-  check(!!mid["qr-app-00.02"] && !!mid["qr-app-00.01"], `update: the new version saved qr-app-00.02 while the old one still serves (${Object.keys(mid).join(", ")})`);
+  check(!!mid[`qr-app-${V2}`] && !!mid[`qr-app-${V1}`], `update: the new version saved qr-app-${V2} while the old one still serves (${Object.keys(mid).join(", ")})`);
   void marker;
   await Promise.all([page.waitForEvent("load", { timeout: 30000 }), note.click()]);
-  await page.waitForFunction(() => /v=00\.02$/.test(navigator.serviceWorker.controller?.scriptURL ?? ""), null, { timeout: 30000 }).catch(() => {});
+  await page.waitForFunction((v) => (navigator.serviceWorker.controller?.scriptURL ?? "").endsWith(`v=${v}`), V2, { timeout: 30000 }).catch(() => {});
   const now = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL ?? "");
-  check(/v=00\.02$/.test(now), `update: after Reload, the new version runs (${now.replace(base, "")})`);
+  check(now.endsWith(`v=${V2}`), `update: after Reload, the new version runs (${now.replace(base, "")})`);
   const after = await cacheReport(page);
-  check(!!after["qr-app-00.02"] && !after["qr-app-00.01"], `update: qr-app-00.01 deleted, qr-app-00.02 kept (${Object.keys(after).join(", ")})`);
+  check(!!after[`qr-app-${V2}`] && !after[`qr-app-${V1}`], `update: qr-app-${V1} deleted, qr-app-${V2} kept (${Object.keys(after).join(", ")})`);
   check(!!after["qr-quran-v1"] && !!after["mm-app-11.04"] && !!after["someone-else"], `update: only qr-app- caches are deleted (qr-quran-v1, mm-app-11.04 and someone-else kept)`);
   check(await page.locator('[data-qa-detail="5"]').count() === 1, `update: the reader is back on the same Name after Reload`);
   check(errors.length === 0, `update: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);

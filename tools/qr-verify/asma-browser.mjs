@@ -62,7 +62,7 @@ const outsideHosts = new Map(); // host -> count, every width/lang
 try {
   {
     const ctx = await browser.newContext();
-    await ctx.addInitScript(() => { try { localStorage.setItem("mm_disable_service_worker", "1"); } catch {} });
+    await ctx.addInitScript(() => { try { localStorage.setItem("mm_disable_service_worker", "1"); localStorage.setItem("mm_disable_screensaver", "1"); } catch {} });
     const page = await ctx.newPage();
     const res = await page.goto(`${base}/app/asma.webmanifest`);
     check(res.ok(), `manifest loads (${res.status()})`);
@@ -97,7 +97,7 @@ try {
       if (!sessionStorage.getItem("qr-test-seeded")) {
         localStorage.clear();
         localStorage.setItem("mm_app_lang", l);
-        localStorage.setItem("mm_disable_service_worker", "1");
+        localStorage.setItem("mm_disable_service_worker", "1"); localStorage.setItem("mm_disable_screensaver", "1");
         sessionStorage.setItem("qr-test-seeded", "1");
       }
     }, lang);

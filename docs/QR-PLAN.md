@@ -52,6 +52,30 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
   unregistered and not registered again. `pages-browser.mjs` and `asma-browser.mjs` set the second;
   `asma-offline-browser.mjs` does not.
 
+## The 🌙 screensaver (QR J01 R3)
+
+- **Same experience as MMSA** (`asma-screensaver.js` + `screensaver-idle.js`, 077b4db): the Names' posters one after
+  another, with MMSA's settings and defaults (start by itself after 3 minutes, 15 seconds a poster, template and photo
+  posters, all Names, carry on, fade, clock, dim at night, keep the screen on), kept on this device only
+  (localStorage `mm_screensaver`). "Ones I'm studying" uses this device's Studied ticks; "A group or list" the
+  owner's groups (group 19 shown as "Other Names").
+- **Files:** `screensaver-idle.js` and `asma-posters.js` copied byte-identical. `asma-screensaver.js` could NOT be
+  kept identical (it imports `session-context.js`, so Firebase): `app/js/asma-screensaver-qr.js` is GENERATED from it
+  by `tools/qr-asma/make-screensaver.mjs <MMSA checkout>` with 8 listed edits (no Firebase; the Names come from the
+  app; "Open this Name" opens it here; ⚙ restarts through QR's watcher; a tap or key closes it; no "Where it may
+  start" row). `--check` proves the file is exactly that. `app/js/qr-screensaver.js` is QR's watcher (MMSA's
+  `armScreensaver` logic, loading the QR copy); nothing loads until it first starts.
+- **Opening and closing:** 🌙 beside the tabs, and "Screensaver settings" in the footer. A tap on the poster or any
+  key (except ← → space) closes it; the page under it never changed, so the reader is exactly where they were.
+- **Kill switches (as MMSA):** `mm_disable_screensaver = "1"` or `?noscreensaver` stop it starting by itself
+  (🌙 still opens it). The browser suites set the first.
+- **Photo posters** come from archive.org (MMSA's set): online only; offline, the template posters show.
+
+## Versions
+
+Every change to a file the worker saves bumps `APP_VERSION` in `app/js/qr-version.js` (standing rule, QR Architect).
+00.01 = R2 (offline); 00.02 = R3 (screensaver).
+
 ## Never changes (shared with MMSA)
 
 Firebase project `study-monitoring`, the Firestore Rules, the records/activity paths, unit keys and the four
@@ -85,6 +109,9 @@ the signed-in QR (QR J02).
   then the browser offline AND the server stopped: 99 Names, groups wheel, Name 1 with poster and āyāt, Name 20's
   hadith, ‹ ›, Bangla; then a version bump (note, Reload, new cache, old qr-app- cache deleted only) and both kill
   switches. `--mutate=precache|cleanup|skipwaiting` must fail.
+- `node tools/qr-verify/asma-screensaver-browser.mjs`: the screensaver at 390/1400, EN/BN, Night/Light (settings kept,
+  speed, group order, tap/key closes to the same place). `--mutate=tapclose|persist|speed` must fail.
+- `node tools/qr-asma/make-screensaver.mjs <MMSA checkout> --check`: the QR screensaver is MMSA's plus the 8 edits.
 - `node tools/qr-verify/asma-local-sync.mjs <MMSA checkout>`: `app/js/asma-local.js` still matches MMSA, function by function.
 
 ## Copy log (every copy from MMSA, newest first)

@@ -22,7 +22,7 @@ const browser = await chromium.launch();
 try {
   for (const width of WIDTHS) for (const colorScheme of SCHEMES) {
     const ctx = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 900 }, colorScheme });
-    await ctx.addInitScript(() => { try { localStorage.setItem("mm_disable_service_worker", "1"); } catch {} });
+    await ctx.addInitScript(() => { try { localStorage.setItem("mm_disable_service_worker", "1"); localStorage.setItem("mm_disable_screensaver", "1"); } catch {} });
     for (const p of PAGES) {
       const page = await ctx.newPage();
       const errors = [];
