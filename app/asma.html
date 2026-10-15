@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" data-card-look="night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asma ul Husna · QuranRevival</title>
+<meta name="description" content="The 99 Names of Allah: each Name's meaning, poster, and the ayat and hadith it is named in. No sign-in.">
+<meta name="theme-color" content="#0f4c4c">
+<link rel="manifest" href="./asma.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./img/asma-icon-192.png">
+<link rel="apple-touch-icon" href="./img/asma-apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Asma">
+<script>
+  // Before first paint, so neither the look nor the language flashes (same keys as MMSA's prefs.js).
+  try {
+    document.documentElement.setAttribute("data-card-look", localStorage.getItem("mm_card_look") === "light" ? "light" : "night");
+    if (localStorage.getItem("mm_app_lang") === "bn") document.documentElement.lang = "bn";
+  } catch (e) { /* storage blocked: Night, English */ }
+</script>
+<link rel="stylesheet" href="./css/qr-fonts.css">
+<link rel="stylesheet" href="./css/asma.css">
+<!-- QR J01 R1: no sign-in and no Firebase on this page. No service worker yet (R2). -->
+</head>
+<body>
+<header class="qa-top">
+  <div class="qa-top-row">
+    <a class="qa-title" href="#v=names">
+      <span class="qa-title-ar" lang="ar" dir="rtl">الأسماء الحسنى</span>
+      <span class="qa-title-en" data-qa-text="Asma ul Husna">Asma ul Husna</span>
+    </a>
+    <div class="qa-switches">
+      <div class="qa-seg" role="group" aria-label="Language" data-qa-label="Language">
+        <button type="button" data-qa-lang="en" aria-pressed="true" lang="en">EN</button>
+        <button type="button" data-qa-lang="bn" aria-pressed="false" lang="bn">বাং</button>
+      </div>
+      <div class="qa-seg" role="group" aria-label="Card look" data-qa-label="Card look">
+        <button type="button" data-qa-look="night" aria-pressed="true" data-qa-label="Night look">🌙</button>
+        <button type="button" data-qa-look="light" aria-pressed="false" data-qa-label="Light look">☀</button>
+      </div>
+    </div>
+  </div>
+  <nav class="qa-tabs" aria-label="Asma ul Husna">
+    <button type="button" data-qa-tab="names" data-qa-text="99 Names">99 Names</button>
+    <button type="button" data-qa-tab="groups" data-qa-text="Groups">Groups</button>
+  </nav>
+</header>
+
+<main id="qaView" class="qa-view" tabindex="-1"></main>
+
+<footer class="qa-foot">
+  <p data-qa-text="Studied ticks stay on this device only.">Studied ticks stay on this device only.</p>
+  <p><a href="../" data-qa-text="QuranRevival home">QuranRevival home</a></p>
+</footer>
+
+<div id="qaPosterOverlay" class="qa-overlay" hidden>
+  <div class="qa-overlay-bar">
+    <button type="button" id="qaPosterBack" class="qa-back">← Back</button>
+    <button type="button" id="qaPosterClose" class="qa-close" aria-label="Close">×</button>
+  </div>
+  <div id="qaPosterMount" class="qa-overlay-mount"></div>
+</div>
+
+<noscript><p class="qa-noscript">This app needs JavaScript switched on.</p></noscript>
+<script type="module">import "./js/asma-app.js";</script>
+</body>
+</html>

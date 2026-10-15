@@ -1,0 +1,20 @@
+{
+  "name": "Asma ul Husna",
+  "short_name": "Asma",
+  "description": "The 99 Names of Allah: meanings, posters, and the ayat and hadith each Name is named in. No sign-in.",
+  "id": "./asma.html",
+  "start_url": "./asma.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0f4c4c",
+  "background_color": "#0d2225",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "books"],
+  "icons": [
+    { "src": "img/asma-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/asma-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/asma-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
