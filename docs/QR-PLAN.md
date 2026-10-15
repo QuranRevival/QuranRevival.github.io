@@ -54,10 +54,13 @@ the signed-in QR (QR J02).
 
 - `npm test`: the naming check, then every page at 390 and 1400 wide, Light and Night (loads, title, no page errors,
   no sideways scroll, own background). Link Playwright once: `ln -s /opt/node22/lib/node_modules node_modules`.
-- `node tools/qr-verify/import-walk.mjs asma-study.html`: the scripts a page needs (run inside an MMSA checkout).
+- `node tools/qr-verify/import-walk.mjs asma-study.html`: the scripts a page needs (run inside an MMSA checkout; in QR, `asma.html`).
+- `node tools/qr-verify/asma-browser.mjs`: the Asma app at 390 and 1400, English and Bangla, and ZERO requests to any
+  Firebase or Google host. `--mutate=nav|firebase|studied|back` breaks one thing as served; the suite must fail.
+- `node tools/qr-verify/asma-local-sync.mjs <MMSA checkout>`: `app/js/asma-local.js` still matches MMSA, function by function.
 
 ## Copy log (every copy from MMSA, newest first)
 
 | When (Sydney) | MMSA commit | What was copied | QR job |
 |---|---|---|---|
-| (none yet: waiting for the PCA's commit after MMSA Builder round #878) | | | |
+| 16 Oct 2026, 8:37 am | `077b4db` | **74 files, 20.3 MB, all byte-identical:** 22 scripts in `app/js/` (0.74 MB: `asma-renderer`, `asma-poster`, `asma-poster-data`, `asma-ref-parser`, `asma-descriptions`, `asma-cited-ayat`, `asma-cited-hadith`, `asma-collections-data`, `asma-data`, `mastery-wheel`, `unit-keys`, `labels`, `lang`, `prefs`, `i18n`, `i18n/bn`, `i18n/surah-names-bn`, `i18n/asma-names-bn`, `quran-data`, `quran-word-identity`, `openiti-corpus`, `hadith-translations`); `app/img/asma-poster-frame.webp` (0.2 MB); the 51 surah files the Names cite, `tools/quran-data-pull/output/surahs/` (19.4 MB). **Derived, not copied as files:** `app/js/asma-local.js` (12 pure functions of `asma-collections.js`, byte-identical, checked by `tools/qr-verify/asma-local-sync.mjs`); `tools/hadith-data-pull/output/asma-cited-hadith.json` (the 14 cited passages and their translations, 66 KB, written by `tools/qr-asma/extract-cited-hadith.mjs` from MMSA's 114 MB library). No copied file was changed. | QR J01 R1 |

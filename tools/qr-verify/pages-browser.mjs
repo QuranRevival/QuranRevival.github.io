@@ -5,7 +5,7 @@
 import { spawn } from "node:child_process";
 import { chromium } from "playwright";
 
-const PAGES = ["/"]; // R1 adds /app/asma-study.html and the Asma start page
+const PAGES = ["/", "/app/asma.html"]; // QR J01 R1: the Asma app (no sign-in)
 const WIDTHS = [390, 1400];
 const SCHEMES = ["light", "dark"];
 const PORT = Number(process.env.PORT) || 8090;
