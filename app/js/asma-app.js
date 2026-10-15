@@ -32,7 +32,7 @@ import { tr } from "./asma-app-strings.js";
 
 /** Where a Name's poster sits. false (today's MMSA way): behind a "🖼 Poster" button. true: shown on the Name's
  *  page straight away (a tap still opens it full size). The owner chooses. */
-export const POSTER_INLINE = false;
+export const POSTER_INLINE = true;
 
 /** MMSA's Hadith library, where "Open in Hadith ↗" goes (Hadith stays MMSA's; QR only links to it). */
 const HADITH_LIBRARY = "https://madrasatul-muslimeen.github.io/app/hadith-collections.html";

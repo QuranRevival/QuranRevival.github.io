@@ -9,6 +9,7 @@
 //       firebase  the page imports the Firebase SDK from www.gstatic.com
 //       studied   "Studied" is not kept (localStorage is not written)
 //       back      the poster's ← Back does nothing
+//       inline    POSTER_INLINE back to false (the poster behind its 🖼 button)
 //       cardlabel the room above a Name's Arabic is taken away (its "N of 99" label sits on the marks again)
 //       wheel     the QR-only wheel-label fitting is off (MMSA's two-line wrap, nothing shrunk to its slice)
 import fs from "node:fs";
@@ -182,21 +183,23 @@ try {
     await noSideways(page, `${tag} Name 1`);
     await tapTargets(page, `${tag} Name 1`);
     await labelClearOfArabic(page, `${tag} Name 1`);
+    await inlinePosterCalm(page, `${tag} Name 1`, width);
 
     // ‹ ›
     await page.click("[data-qa-next]");
     await page.waitForSelector('[data-qa-detail="2"]', { timeout: 3000 }).catch(() => {});
     check(await page.locator('[data-qa-detail="2"]').count() === 1 && (await page.locator("[data-qa-arabic]").innerText()).trim() === "الرَّحِيم", `${tag} › goes to Name 2`);
     await labelClearOfArabic(page, `${tag} Name 2`);
+    await inlinePosterCalm(page, `${tag} Name 2`, width);
     await page.click("[data-qa-prev]");
     await page.waitForSelector('[data-qa-detail="1"]', { timeout: 3000 }).catch(() => {});
     check(await page.locator('[data-qa-detail="1"]').count() === 1, `${tag} ‹ comes back to Name 1`);
     check(await page.locator("[data-qa-prev]").isDisabled(), `${tag} ‹ is off on the first Name`);
 
     // The poster, full size, and its way back
-    await page.click("[data-qa-poster]");
+    await page.click(".qa-poster-inline");
     await page.waitForSelector("#qaPosterOverlay:not([hidden]) .ahp[data-asma-poster='1']", { timeout: 5000 }).catch(() => {});
-    check(await page.locator("#qaPosterOverlay:not([hidden]) .ahp[data-asma-poster='1']").count() === 1 && /v=poster/.test(page.url()), `${tag} the full poster opens`);
+    check(await page.locator("#qaPosterOverlay:not([hidden]) .ahp[data-asma-poster='1']").count() === 1 && /v=poster/.test(page.url()), `${tag} one tap on the poster opens it full size`);
     const desc = (await page.locator("#qaPosterMount [data-poster-desc]").innerText().catch(() => "")).trim();
     check(desc.length > 40, `${tag} the poster shows Name 1's description (${desc.length} chars)`);
     const sources = await page.locator("#qaPosterMount [data-asma-desc-strip] [data-asma-desc-src]:visible").evaluateAll((bs) => bs.map((b) => b.dataset.asmaDescSrc));
@@ -249,24 +252,26 @@ try {
     await ctx.close();
   }
 
-  // ---- 4. The poster shown straight away (POSTER_INLINE = true), as the owner may choose. ----
+  // ---- 4. The old way (POSTER_INLINE = false, MMSA's today): the poster behind a 🖼 button. ----
   if (!MUTATE) for (const width of WIDTHS) {
     const ctx = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 900 } });
     await ctx.route("**/app/js/asma-app.js", async (route) => {
       const res = await route.fetch();
-      await route.fulfill({ response: res, body: (await res.text()).replace("export const POSTER_INLINE = false;", "export const POSTER_INLINE = true;") });
+      const text = await res.text();
+      if (!text.includes("export const POSTER_INLINE = true;")) throw new Error("POSTER_INLINE is not true in asma-app.js");
+      await route.fulfill({ response: res, body: text.replace("export const POSTER_INLINE = true;", "export const POSTER_INLINE = false;") });
     });
     const page = await ctx.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(`${base}/app/asma.html#v=name&n=7`, { waitUntil: "load" });
     await page.waitForSelector('[data-qa-detail="7"]');
-    check(await page.locator(".qa-namecard .qa-poster-inline .ahp").count() === 1, `@${width} POSTER_INLINE=true: the poster shows on the Name straight away`);
-    await page.click(".qa-poster-inline");
+    check(await page.locator(".qa-namecard .qa-poster-inline").count() === 0 && await page.locator(".qa-namecard .qa-btn[data-qa-poster]").isVisible(), `@${width} POSTER_INLINE=false: no poster on the Name, a 🖼 Poster button instead`);
+    await page.click(".qa-btn[data-qa-poster]");
     await page.waitForSelector("#qaPosterOverlay:not([hidden]) .ahp", { timeout: 3000 }).catch(() => {});
-    check(await page.locator("#qaPosterOverlay:not([hidden]) .ahp").count() === 1, `@${width} POSTER_INLINE=true: a tap opens it full size`);
-    await noSideways(page, `@${width} POSTER_INLINE=true`);
-    check(errors.length === 0, `@${width} POSTER_INLINE=true: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
+    check(await page.locator("#qaPosterOverlay:not([hidden]) .ahp[data-asma-poster='7']").count() === 1, `@${width} POSTER_INLINE=false: the button opens the poster full size`);
+    await noSideways(page, `@${width} POSTER_INLINE=false`);
+    check(errors.length === 0, `@${width} POSTER_INLINE=false: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
     await ctx.close();
   }
 } finally {
@@ -292,6 +297,27 @@ async function tapTargets(page, what) {
     .map((el) => ({ h: el.getBoundingClientRect().height, t: (el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 30) }))
     .filter((x) => x.h < 39.5));
   check(small.length === 0, `${what}: every control is at least 40px tall${small.length ? ": " + small.map((x) => `${x.t} ${Math.round(x.h)}px`).join(", ") : ""}`);
+}
+/** The poster on the Name page itself (POSTER_INLINE = true, the owner's Q4 = A): there straight away, after the
+ *  Arabic, name, meaning and the Studied button (nothing crowded ahead of them), whole, and inside the screen. */
+async function inlinePosterCalm(page, what, width) {
+  await page.waitForSelector(".qa-namecard .qa-poster-inline .ahp", { timeout: 3000 }).catch(() => {});
+  const r = await page.evaluate(() => {
+    const q = (s) => document.querySelector(s)?.getBoundingClientRect();
+    const order = [".qa-ar", ".qa-name", ".qa-mean", ".qa-actions", ".qa-poster-inline"].map((s) => q(s));
+    const poster = q(".qa-poster-inline .ahp");
+    return {
+      shown: !!poster && poster.height > 100,
+      inOrder: order.every(Boolean) && order.every((b, i) => i === 0 || b.top >= order[i - 1].bottom - 1),
+      button: !!document.querySelector(".qa-namecard .qa-btn[data-qa-poster]"),
+      left: poster?.left ?? -1, right: poster?.right ?? 1e9, w: poster?.width ?? 0,
+      gap: poster && order[3] ? poster.top - order[3].bottom : -1,
+    };
+  });
+  check(r.shown && !r.button, `${what}: the poster shows on the Name straight away (no 🖼 button needed)`);
+  check(r.inOrder && r.gap >= 8, `${what}: Arabic, name, meaning and buttons come first, then the poster (${Math.round(r.gap)}px clear)`);
+  check(r.left >= 0 && r.right <= width && r.w >= Math.min(280, width - 80), `${what}: the poster fits the screen (${Math.round(r.w)}px wide)`);
+  await noSideways(page, `${what} with the poster`);
 }
 /** A Name's "N of 99" label must end above the INK of its Arabic (the marks Amiri draws above the line box too). */
 async function labelClearOfArabic(page, what) {
@@ -381,6 +407,7 @@ async function mutate(ctx, name) {
     firebase: [/^/, 'import "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";\n'],
     studied: [/localStorage\.setItem\(STUDIED_KEY,[^;]+;/, "void 0;"],
     back: [/overlayBack\.onclick = \(\) => backTo\(\{ v: "name", n, g: groupId \}\);/, "overlayBack.onclick = () => {};"],
+    inline: [/export const POSTER_INLINE = true;/, "export const POSTER_INLINE = false;"],
     cardlabel: [/(\.qa-ar \{[^}]*?)padding-top: 0\.4em; /, "$1", "**/app/css/asma.css"],
     wheel: [/export function fitWheelLabels\(svg\) \{/, `export function chooseSliceLines(text, i, n, { lead = [] } = {}) {
   const s = String(text ?? "").trim(), mid = Math.floor(s.length / 2);
