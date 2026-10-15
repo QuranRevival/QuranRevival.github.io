@@ -23,7 +23,8 @@ import { renderCitedHadithHtml } from "./asma-cited-hadith.js";
 import { OPENITI_LICENCE, OPENITI_CREDIT_URL } from "./openiti-corpus.js";
 import { parseAsmaRef } from "./asma-ref-parser.js";
 import { getAyah } from "./quran-data.js";
-import { renderScopedWheel, attachScopedWheelClickHandler, wrapWheelLabel, STATUS_COLORS } from "./mastery-wheel.js";
+import { renderScopedWheel, attachScopedWheelClickHandler, STATUS_COLORS } from "./mastery-wheel.js";
+import { chooseSliceLines, fitWheelLabels } from "./asma-wheel-fit.js";
 import { t, num, surahName, ensureCatalogueReady } from "./i18n.js";
 import { langText } from "./lang.js";
 import { getAppLang, setAppLang, getCardLook, setCardLook } from "./prefs.js";
@@ -53,8 +54,14 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 // ---------------------------------------------------------------------------------------------------------------
 // The Names and the owner's groups (seed data: no madrasah document without sign-in).
 // ---------------------------------------------------------------------------------------------------------------
+/** Group titles the app shows differently from the seed (asma-collections-data.js stays byte-identical with MMSA).
+ *  Group 19's seed title is the owner's own editing note ("Not yet placed — organize these yourself"), which
+ *  students must not see (QR Architect review of R1). */
+export const GROUP_TITLE_OVERRIDES = Object.freeze({
+  asmacat_19: { en: "Other Names", bn: "অন্যান্য নাম" },
+});
 const EXTRA_NAMES = extraNamesFrom(null);
-const COLLECTIONS = collectionsFrom(null);
+const COLLECTIONS = collectionsFrom(null).map((c) => (GROUP_TITLE_OVERRIDES[c.id] ? { ...c, title: GROUP_TITLE_OVERRIDES[c.id] } : c));
 const CLASSIFICATIONS = classificationsFrom(null);
 const GROUPS = activeCollections(COLLECTIONS).filter((c) => c.kind === "group");
 const resolve = (n) => resolveAsmaEntry(n, { extraNames: EXTRA_NAMES });
@@ -206,18 +213,15 @@ function renderNames() {
   viewEl.querySelectorAll("[data-qa-name]").forEach((b) => b.addEventListener("click", () => openName(Number(b.dataset.qaName), null)));
 }
 
-/** MMSA quranrevival.html's wheelLabelMaxLen(), at the default label size: how many characters fit on a slice. */
-function wheelLabelMaxLen(n) {
-  const rOuter = 360 / 2 - 4;
-  const rInner = rOuter * 0.5;
-  const midR = (rOuter + rInner) / 2;
-  const arcLen = midR * (360 / Math.max(n, 1)) * (Math.PI / 180);
-  return Math.max(6, Math.min(22, Math.floor(arcLen / (4.4 * 1.3))));
+/** Every slice label inside its own slice, no word cut (asma-wheel-fit.js); again once the fonts are in. */
+function fitWheel() {
+  const svg = viewEl.querySelector("[data-qa-wheel] svg");
+  fitWheelLabels(svg);
+  document.fonts?.ready.then(() => { if (svg?.isConnected) fitWheelLabels(svg); });
 }
 
 function renderGroups() {
   const title = t("All Groups");
-  const maxLen = wheelLabelMaxLen(GROUPS.length);
   const items = GROUPS.map((g, i) => {
     const nums = groupNumbers(g);
     const label = esc(langText(g.title, getAppLang()));
@@ -225,7 +229,7 @@ function renderGroups() {
       key: g.id, statusId: "not_started", title: label, number: num(i + 1),
       // A slice fills from the hub as its Names are studied on this device.
       progress: nums.length ? nums.filter((n) => studied.has(n)).length / nums.length : 0,
-      sliceLines: wrapWheelLabel(label, maxLen),
+      sliceLines: chooseSliceLines(langText(g.title, getAppLang()), i, GROUPS.length).map(esc),
     };
   });
   const rows = GROUPS.map((g, i) => {
@@ -246,6 +250,7 @@ function renderGroups() {
       </section>
       <section class="qa-list" aria-label="${esc(title)}">${rows}</section>
     </div>`;
+  fitWheel();
   attachScopedWheelClickHandler(viewEl.querySelector("[data-qa-wheel]"), (key) => nav({ v: "group", g: key }));
   viewEl.querySelectorAll("[data-qa-group]").forEach((b) => b.addEventListener("click", () => nav({ v: "group", g: b.dataset.qaGroup })));
 }
@@ -262,14 +267,13 @@ function renderGroup(groupId) {
   const title = langText(g.title, getAppLang());
   const nums = groupNumbers(g);
   const { runningByKey } = asmaPositionLabels(GROUPS);
-  const maxLen = wheelLabelMaxLen(nums.length);
-  const items = nums.map((n) => {
+  const items = nums.map((n, i) => {
     const e = resolve(n);
     const key = `name:${n}`;
     return {
       key, statusId: studied.has(n) ? "mastered" : "not_started", title: esc(asmaEntryDisplayName(e)),
       number: num(runningByKey.get(key) ?? n),
-      sliceLines: [esc(e.arabic), ...wrapWheelLabel(esc(asmaEntryDisplayName(e)), maxLen)],
+      sliceLines: chooseSliceLines(asmaEntryDisplayName(e), i, nums.length, { lead: [e.arabic] }).map(esc),
       sliceArabicLines: 1,
     };
   });
@@ -295,6 +299,7 @@ function renderGroup(groupId) {
       <section class="qa-list" aria-label="${esc(title)}">${rows}</section>
     </div>`;
   viewEl.querySelector("[data-qa-back]").addEventListener("click", () => backTo({ v: "groups" }));
+  fitWheel();
   attachScopedWheelClickHandler(viewEl.querySelector("[data-qa-wheel]"), (key) => openName(Number(key.split(":")[1]), groupId));
   viewEl.querySelectorAll("[data-qa-name]").forEach((b) => b.addEventListener("click", () => openName(Number(b.dataset.qaName), groupId)));
 }
