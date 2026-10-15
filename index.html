@@ -12,6 +12,11 @@ main{min-height:100%;display:flex;flex-direction:column;align-items:center;justi
 h1{margin:0 0 8px;font-size:2rem;color:var(--accent)}
 p{margin:4px 0;color:var(--muted);max-width:32rem}
 a{color:var(--accent)}
+.card{display:flex;align-items:center;gap:14px;margin-top:20px;min-height:56px;padding:12px 18px;border-radius:14px;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);background:color-mix(in srgb,var(--accent) 7%,var(--bg));text-decoration:none;color:var(--fg);max-width:22rem;width:100%;box-sizing:border-box;text-align:left}
+.card:hover,.card:focus-visible{border-color:var(--accent)}
+.card img{width:40px;height:40px;border-radius:10px;flex:0 0 auto}
+.card b{display:block;color:var(--accent)}
+.card small{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -19,6 +24,7 @@ a{color:var(--accent)}
 <h1>QuranRevival</h1>
 <p>Quran Study · Asma ul Husna · Learn Deen On-the-Go</p>
 <p>Coming here soon, in shā’ Allāh. Until then, please use <a href="https://madrasatul-muslimeen.github.io/">the current app</a>.</p>
+<a class="card" href="app/asma.html"><img src="app/img/asma-icon-192.png" alt=""><span><b>Asma ul Husna →</b><small>The 99 Names of Allah. No sign-in.</small></span></a>
 </main>
 </body>
 </html>
