@@ -29,6 +29,12 @@ const BN = Object.freeze({
   "QuranRevival home": "কুরআন রিভাইভাল হোম",
   "Studied ticks stay on this device only.": "পড়া হয়েছে চিহ্নগুলো শুধু এই ডিভাইসে থাকে।",
   "Name not found.": "নামটি পাওয়া যায়নি।",
+  "Save all āyāt for offline use (19 MB)": "সব আয়াত অফলাইনের জন্য রাখুন (১৯ MB)",
+  "Saving… {n} of {total}": "রাখা হচ্ছে… {total}টির মধ্যে {n}",
+  "Ready for offline use ✓": "অফলাইনে ব্যবহারের জন্য প্রস্তুত ✓",
+  "Some could not be saved. Check the connection and try again.": "কিছু রাখা যায়নি। সংযোগ দেখে আবার চেষ্টা করুন।",
+  "The Names work offline. The āyāt you have opened are saved too.": "নামগুলো অফলাইনে চলে। যে আয়াতগুলো খুলেছেন সেগুলোও রাখা আছে।",
+  "A new version is ready": "নতুন সংস্করণ প্রস্তুত",
 });
 
 /** Like t(), with the QR-only Bangla above; {name}-style placeholders are filled the same way. */

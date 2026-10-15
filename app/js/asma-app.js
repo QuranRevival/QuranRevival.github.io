@@ -29,6 +29,7 @@ import { t, num, surahName, ensureCatalogueReady } from "./i18n.js";
 import { langText } from "./lang.js";
 import { getAppLang, setAppLang, getCardLook, setCardLook } from "./prefs.js";
 import { tr } from "./asma-app-strings.js";
+import { registerQrServiceWorker, applyUpdate, countSaved, saveForOffline } from "./qr-sw-register.js";
 
 /** Where a Name's poster sits. false (today's MMSA way): behind a "🖼 Poster" button. true: shown on the Name's
  *  page straight away (a tap still opens it full size). The owner chooses. */
@@ -156,6 +157,7 @@ document.querySelectorAll("[data-qa-lang]").forEach((b) => b.addEventListener("c
   setAppLang(b.dataset.qaLang);
   await ensureCatalogueReady();
   show(current, { keepScroll: true });
+  if (!offlineEl.hidden) paintOffline();
 }));
 document.querySelectorAll("[data-qa-look]").forEach((b) => b.addEventListener("click", () => { setCardLook(b.dataset.qaLook); paintFrame(); }));
 
@@ -543,3 +545,49 @@ history.replaceState({ r: current, from: history.state?.from ?? null }, "", rout
 if (current.v === "name" || current.v === "poster") lastOpenedName = current.n;
 show(current);
 document.documentElement.classList.add("qa-ready");
+
+// ---------------------------------------------------------------------------------------------------------------
+// Offline (R2). The page and everything it needs are saved when the worker installs. The Qur'an files the Names
+// cite (51 surahs, 19 MB) are saved as each is first opened, or all at once by the reader's "Save for offline":
+// 19 MB is too much to take unasked on a first visit over a phone's data.
+// ---------------------------------------------------------------------------------------------------------------
+/** The surah files the Names cite, at quran-data.js's own address (its BASE_URL). */
+export const CITED_SURAH_URLS = (() => {
+  const nums = new Set();
+  const all = [...ASMA_NAMES.map((n) => n.number), ...EXTRA_NAMES.map((e) => e.number)];
+  for (const n of all) for (const c of parseAsmaRef(resolve(n)?.ref ?? "")) if (c.kind === "quran") nums.add(c.surah);
+  return [...nums].sort((a, b) => a - b).map((s) => `/tools/quran-data-pull/output/surahs/surah_${String(s).padStart(3, "0")}.json`);
+})();
+
+const offlineEl = document.querySelector("[data-qa-offline]");
+const offlineBtn = document.querySelector("[data-qa-offline-save]");
+const offlineNote = document.querySelector("[data-qa-offline-note]");
+let offlineState = { saved: 0, saving: false, failed: 0 };
+function paintOffline() {
+  const total = CITED_SURAH_URLS.length;
+  const { saved, saving, failed } = offlineState;
+  offlineBtn.hidden = saved >= total && !saving;
+  offlineBtn.disabled = saving;
+  offlineBtn.textContent = tr("Save all āyāt for offline use (19 MB)");
+  offlineNote.textContent = saving ? tr("Saving… {n} of {total}", { n: num(saved), total: num(total) })
+    : saved >= total ? tr("Ready for offline use ✓")
+    : failed ? tr("Some could not be saved. Check the connection and try again.")
+    : tr("The Names work offline. The āyāt you have opened are saved too.");
+}
+async function startOffline() {
+  // Switched off (?nosw, mm_disable_service_worker): registerQrServiceWorker() unregisters and returns null.
+  const reg = await registerQrServiceWorker({ onUpdateReady: () => { document.querySelector("[data-qa-update]").hidden = false; } });
+  if (!reg || !("caches" in self)) return;
+  offlineState.saved = await countSaved(CITED_SURAH_URLS).catch(() => 0);
+  offlineEl.hidden = false;
+  paintOffline();
+}
+offlineBtn.addEventListener("click", async () => {
+  offlineState = { saved: 0, saving: true, failed: 0 };
+  paintOffline();
+  const failed = await saveForOffline(CITED_SURAH_URLS, (done) => { offlineState.saved = done; paintOffline(); });
+  offlineState = { saved: await countSaved(CITED_SURAH_URLS), saving: false, failed };
+  paintOffline();
+});
+document.querySelector("[data-qa-update-reload]").addEventListener("click", () => applyUpdate());
+startOffline();

@@ -259,4 +259,17 @@ body.qa-poster-open { overflow: hidden; }
   .qa-detail { grid-template-columns: minmax(0, 400px) minmax(0, 1fr); align-items: start; }
   .qa-ar { font-size: 3rem; }
 }
+/* ---- offline (R2) ---- */
+.qa-offline { display: grid; justify-items: center; gap: 4px; margin: 4px auto 12px; max-width: 32rem; }
+.qa-offline[hidden], .qa-offline [hidden] { display: none; }
+.qa-offline .qa-btn { min-height: 44px; }
+.qa-offline-note { margin: 0; font-size: 0.82rem; color: var(--muted); }
+.qa-update {
+  position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60;
+  display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px); padding: 6px 6px 6px 16px;
+  border-radius: 999px; background: var(--surface); color: var(--text); border: 1px solid var(--gold); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  font-size: 0.9rem;
+}
+.qa-update[hidden] { display: none; }
+.qa-update button { min-height: 40px; padding: 0 16px; border-radius: 999px; border: 0; background: var(--gold); color: var(--on-gold); font-weight: 700; cursor: pointer; }
 .qa-noscript { padding: 16px; text-align: center; }
