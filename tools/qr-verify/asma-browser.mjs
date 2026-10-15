@@ -52,8 +52,8 @@ const check = (ok, what) => {
   walk("app/asma.html");
   check(seen.size > 10, `static: app/asma.html reaches ${seen.size - 1} scripts`);
   check(remote.length === 0, `static: no script in the closure imports from another site${remote.length ? ": " + remote.join(", ") : ""}`);
-  const named = [...seen].filter((f) => /firebase-init\.js|asma-collections\.js$|sw-register\.js/.test(f));
-  check(named.length === 0, `static: no firebase-init.js, asma-collections.js or sw-register.js in the closure${named.length ? ": " + named.join(", ") : ""}`);
+  const named = [...seen].filter((f) => /firebase-init\.js$|(^|\/)asma-collections\.js$|(^|\/)sw-register\.js$/.test(f));
+  check(named.length === 0, `static: no firebase-init.js, asma-collections.js or MMSA's sw-register.js in the closure${named.length ? ": " + named.join(", ") : ""}`);
 }
 
 // ---- 2. The manifest and its icons. ----
@@ -62,6 +62,7 @@ const outsideHosts = new Map(); // host -> count, every width/lang
 try {
   {
     const ctx = await browser.newContext();
+    await ctx.addInitScript(() => { try { localStorage.setItem("mm_disable_service_worker", "1"); } catch {} });
     const page = await ctx.newPage();
     const res = await page.goto(`${base}/app/asma.webmanifest`);
     check(res.ok(), `manifest loads (${res.status()})`);
@@ -81,7 +82,7 @@ try {
     const apple = await page.goto(`${base}/app/${links.apple.replace("./", "")}`);
     check(apple.ok(), `apple-touch-icon loads (${apple.status()})`);
     const sw = await page.evaluate(async () => (await navigator.serviceWorker?.getRegistrations?.() ?? []).length);
-    check(sw === 0, "no service worker registered (that is R2)");
+    check(sw === 0, "with mm_disable_service_worker=1 no service worker is registered (the offline suite covers the worker)");
     await ctx.close();
   }
 

@@ -23,10 +23,34 @@ Jobs live in the PCF (https://claude.ai/artifact/PhW1KKX28qrqj9dE7Ha8dZ): QR J01
 | `mm-ext-v1` | `qr-ext-v1` |
 | `mm-mushaf-v1` | `qr-mushaf-v1` |
 
-The old-cache clean-up in `app/sw.js` must only delete `qr-` caches. `tools/qr-verify/naming.mjs` checks this
-(proved: MMSA's own `sw.js` fails it 0/6; the renamed one passes 6/6).
+The old-cache clean-up in `app/sw.js` must only delete `qr-` caches. `tools/qr-verify/naming.mjs` checks this.
 Storage keys such as `mm_disable_service_worker` stay as they are: storage belongs to one site address, so they
 cannot clash, and keeping them keeps the shared scripts identical with MMSA.
+
+## Offline (QR J01 R2): the Asma app
+
+- **Worker:** `app/sw.js`, QR's own (not MMSA's copy), a CLASSIC worker so every browser with service workers runs it.
+  Only `app/asma.html` registers it, through `app/js/qr-sw-register.js`, as `./sw.js?v=<APP_VERSION>`, scope `/app/`.
+- **Version:** `app/js/qr-version.js` (`APP_VERSION`, QR numbering, allocated by the QR Architect; starts at `00.01`).
+  The worker reads it from its own address. The page asks the network first for `qr-version.js`, so an online visit
+  always learns of a new number.
+- **Caches:**
+
+  | Cache | What | Size | When |
+  |---|---|---|---|
+  | `qr-app-<APP_VERSION>` | the page, its 28 scripts, 2 stylesheets, 8 fonts, poster frame, manifest, icons, `asma-cited-hadith.json` (46 files) | 1.6 MB | saved when the worker installs |
+  | `qr-quran-v1` | the 51 surah files the Names cite | 19.4 MB | each on first use, or all at once by the reader's "Save all āyāt for offline use (19 MB)" (progress shown) |
+
+  Why not precache the surahs: 19 MB taken unasked on a first visit over a phone's data is unkind, and a large install
+  fails more often. The Names, posters, groups and hadith work offline from the first visit; the āyāt a reader has
+  opened are kept; one tap keeps them all. `qr-quran-v1` survives version changes, so a new version never downloads
+  the 19 MB again.
+- **Activate:** deletes every `qr-app-` cache except the current one, and nothing else (not `qr-quran-v1`, never `mm-`).
+- **Updates:** a new worker WAITS. The page shows "A new version is ready · Reload"; only that tap swaps it in and
+  reloads, back to the same view. Code never changes under a reader mid-visit.
+- **Kill switches (as MMSA):** `?nosw` in the address, or `localStorage.mm_disable_service_worker = "1"`: the worker is
+  unregistered and not registered again. `pages-browser.mjs` and `asma-browser.mjs` set the second;
+  `asma-offline-browser.mjs` does not.
 
 ## Never changes (shared with MMSA)
 
@@ -57,6 +81,10 @@ the signed-in QR (QR J02).
 - `node tools/qr-verify/import-walk.mjs asma-study.html`: the scripts a page needs (run inside an MMSA checkout; in QR, `asma.html`).
 - `node tools/qr-verify/asma-browser.mjs`: the Asma app at 390 and 1400, English and Bangla, and ZERO requests to any
   Firebase or Google host. `--mutate=nav|firebase|studied|back` breaks one thing as served; the suite must fail.
+- `node tools/qr-verify/asma-offline-browser.mjs`: at 390 and 1400, online visit, worker active, "Save for offline",
+  then the browser offline AND the server stopped: 99 Names, groups wheel, Name 1 with poster and āyāt, Name 20's
+  hadith, ‹ ›, Bangla; then a version bump (note, Reload, new cache, old qr-app- cache deleted only) and both kill
+  switches. `--mutate=precache|cleanup|skipwaiting` must fail.
 - `node tools/qr-verify/asma-local-sync.mjs <MMSA checkout>`: `app/js/asma-local.js` still matches MMSA, function by function.
 
 ## Copy log (every copy from MMSA, newest first)
