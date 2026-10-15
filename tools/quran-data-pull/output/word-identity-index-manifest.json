@@ -1,0 +1,31 @@
+{
+  "identityContract": "quran-word-occurrence:v1",
+  "sourceManifestSchemaVersion": 1,
+  "occurrenceCount": 77429,
+  "missingRoot": 27458,
+  "missingLemma": 3307,
+  "indexEncoding": "surah*1000000+ayah*1000+position",
+  "loadBoundary": "on-demand-only",
+  "files": {
+    "roots-index.json": {
+      "bytes": 451272,
+      "sha256": "f1c6da963e915b3b2d8e587aa6a28a6c4a8cbe48d58b9af390f7056035ad3e48"
+    },
+    "lemmas-index.json": {
+      "bytes": 735562,
+      "sha256": "abd6ea7b3aff1a9b4dc0677b719862c53f9aae35fb975a3bfcdf612157e2cb91"
+    },
+    "form-index.json": {
+      "bytes": 30413,
+      "sha256": "d55ed7a405fdce9817934a771ff559bc01ea3a043a0373e3959edccbcced3515"
+    },
+    "lemma-pos-index.json": {
+      "bytes": 158887,
+      "sha256": "5136452d2e0625cca3a316a9bd30e781e56bb22a8efe88c9c7922521392f3c34"
+    },
+    "lemma-meaning-index.json": {
+      "bytes": 380177,
+      "sha256": "2d01d5abb5ce340286bfe06a32fd5aa0399e7eaf5c50dc833326c0450184b8f3"
+    }
+  }
+}
