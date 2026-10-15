@@ -82,7 +82,8 @@ const precache = [...servedSw.slice(servedSw.indexOf("const PRECACHE = ["), serv
   const seen = new Set();
   const walk = (f) => { if (seen.has(f)) return; seen.add(f); for (const m of fs.readFileSync(f, "utf8").matchAll(re)) { const p = path.normalize(path.join(path.dirname(f), m[1])); if (fs.existsSync(p)) walk(p); } };
   walk("app/asma.html");
-  const html = fs.readFileSync("app/asma.html", "utf8");
+  walk("app/asma-about.html");
+  const html = fs.readFileSync("app/asma.html", "utf8") + fs.readFileSync("app/asma-about.html", "utf8");
   const linked = [...html.matchAll(/(?:href|src)="\.\/([^"#?]+)"/g)].map((m) => path.normalize(path.join("app", m[1])));
   const manifest = JSON.parse(fs.readFileSync("app/asma.webmanifest", "utf8")).icons.map((i) => path.normalize(path.join("app", i.src)));
   const fonts = fs.readdirSync("app/fonts").map((f) => path.join("app/fonts", f));
