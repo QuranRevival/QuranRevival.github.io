@@ -29,6 +29,7 @@ import { t, num, surahName, ensureCatalogueReady } from "./i18n.js";
 import { langText } from "./lang.js";
 import { getAppLang, setAppLang, getCardLook, setCardLook } from "./prefs.js";
 import { tr } from "./asma-app-strings.js";
+import { armScreensaver, startScreensaver, openScreensaverSettings, setScreensaverData } from "./qr-screensaver.js";
 import { registerQrServiceWorker, applyUpdate, countSaved, saveForOffline } from "./qr-sw-register.js";
 
 /** Where a Name's poster sits. false (today's MMSA way): behind a "🖼 Poster" button. true: shown on the Name's
@@ -590,4 +591,18 @@ offlineBtn.addEventListener("click", async () => {
   paintOffline();
 });
 document.querySelector("[data-qa-update-reload]").addEventListener("click", () => applyUpdate());
+
+// ---------------------------------------------------------------------------------------------------------------
+// The 🌙 screensaver (R3): MMSA's, over this page, with this app's Names, groups and Studied ticks. Any tap or key
+// closes it, and the page underneath was never touched, so the reader is exactly where they were.
+// ---------------------------------------------------------------------------------------------------------------
+setScreensaverData(() => ({
+  entries: [...ASMA_NAMES.map((n) => resolve(n.number)), ...EXTRA_NAMES.filter((e) => e.status === "active").map((e) => resolve(e.number))].filter(Boolean),
+  groups: GROUPS.map((g) => ({ id: g.id, title: langText(g.title, getAppLang()), numbers: groupNumbers(g) })),
+  studied: new Set(studied),
+  failed: false,
+}));
+document.querySelector("[data-qa-saver]").addEventListener("click", () => startScreensaver());
+document.querySelector("[data-qa-saver-settings]").addEventListener("click", () => openScreensaverSettings());
+armScreensaver();
 startOffline();
