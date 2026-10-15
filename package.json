@@ -1,0 +1,9 @@
+{
+  "name": "quranrevival",
+  "private": true,
+  "description": "QuranRevival (QR): Quran Study, Asma ul Husna and Learn Deen On-the-Go. Static site, no build step.",
+  "scripts": {
+    "serve": "node serve.js",
+    "test": "node tools/qr-verify/naming.mjs && node tools/qr-verify/pages-browser.mjs"
+  }
+}
