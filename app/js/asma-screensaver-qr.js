@@ -62,7 +62,7 @@ const CSS = `
 #mmSaver .mms-top{position:absolute;top:max(2.5vh,env(safe-area-inset-top));left:3vw;z-index:4;opacity:0;transition:opacity .3s;pointer-events:none}
 #mmSaver.ctl{cursor:default}
 #mmSaver.ctl .mms-ctl,#mmSaver.ctl .mms-top{opacity:1;pointer-events:auto}
-#mmSaver button{min-width:44px;min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1rem;cursor:pointer;padding:0 12px}
+#mmSaver button{min-width:44px;min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1rem;cursor:pointer;padding:0 12px;white-space:nowrap}
 #mmSaverSettings{position:fixed;inset:0;z-index:19999;background:rgba(15,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 #mmSaverSettings[hidden]{display:none}
 #mmSaverSettings [hidden]{display:none!important}
@@ -163,7 +163,7 @@ export async function runAsmaScreensaver({ entries = null, onClose = () => {} } 
   root.setAttribute("aria-label", t("Asma ul Husna screensaver"));
   root.innerHTML = `<div class="mms-top"><button type="button" data-mms="settings">⚙ ${esc(t("Settings"))}</button></div>
     <div class="mms-clock" aria-hidden="true"></div><div class="mms-stage"></div><div class="mms-bar"></div>
-    <div class="mms-ctl"><button type="button" data-mms="prev" aria-label="${esc(t("Previous"))}">‹</button><button type="button" data-mms="pause" aria-label="${esc(t("Pause"))}">❚❚</button><button type="button" data-mms="next" aria-label="${esc(t("Next"))}">›</button><button type="button" data-mms="open">${esc(t("Open this Name"))}</button><button type="button" data-mms="close">✕ ${esc(t("Close"))}</button></div>`;
+    <div class="mms-ctl"><button type="button" data-mms="prev" aria-label="${esc(t("Previous"))}">‹</button><button type="button" data-mms="pause" aria-label="${esc(t("Pause"))}">❚❚</button><button type="button" data-mms="next" aria-label="${esc(t("Next"))}">›</button><button type="button" data-mms="open" aria-label="${esc(t("Open this Name"))}" title="${esc(t("Open this Name"))}">${esc(t("Open"))}</button><button type="button" data-mms="close">✕ ${esc(t("Close"))}</button></div>`;
   document.body.appendChild(root);
   const stage = root.querySelector(".mms-stage"), bar = root.querySelector(".mms-bar"), clock = root.querySelector(".mms-clock");
   let i = 0, t0 = 0, paused = false, raf = 0, ctlTimer = 0, wake = null, photoFails = 0;

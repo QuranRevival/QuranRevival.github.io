@@ -10,7 +10,8 @@
 //   4. "⚙ Settings" → "Start now" restarts through QR's own watcher (qr-screensaver.js);
 //   5. a tap on the poster or any key other than ← → space closes it (the controls show for the first moments
 //      and whenever the pointer moves), as the QR Architect asked: "any tap or key closes it";
-//   6. no "Where it may start" row: QR has one page.
+//   6. no "Where it may start" row: QR has one page;
+//   7. the bar's buttons stay on one line at 390: "Open" (its full words "Open this Name" as label and title).
 // Everything else (the deck, the order, the timings, the settings panel and its storage) is MMSA's code unchanged.
 //
 //   node tools/qr-asma/make-screensaver.mjs <MMSA checkout>          writes the file
@@ -41,6 +42,8 @@ export function loadScreensaverData() {
   ['root.addEventListener("pointerdown", (e) => { if (!e.target.closest("button")) showCtl(); });', 'root.addEventListener("click", (e) => { if (!e.target.closest("button")) close(); });'],
   ['    else showCtl();\n  };', '    else if (e.key === "Tab" || (e.key === "Enter" && e.target.closest?.("#mmSaver button"))) showCtl();\n    else { e.preventDefault(); close(); }\n  };'],
   ['  tick();\n  keepAwake();', '  tick();\n  showCtl();\n  keepAwake();'],
+  ['<button type="button" data-mms="open">${esc(t("Open this Name"))}</button>', '<button type="button" data-mms="open" aria-label="${esc(t("Open this Name"))}" title="${esc(t("Open this Name"))}">${esc(t("Open"))}</button>'],
+  ['font:inherit;font-size:1rem;cursor:pointer;padding:0 12px}', 'font:inherit;font-size:1rem;cursor:pointer;padding:0 12px;white-space:nowrap}'],
   ['    ${row("Where it may start", seg("where"), "Never while a recitation plays, while you write on the Writing sheet, or while you type.")}\n', ""],
 ];
 
