@@ -163,7 +163,8 @@ body.qa-poster-open { overflow: hidden; }
   text-align: center; min-width: 0;
 }
 .qa-num { color: var(--muted); font-size: 0.85rem; }
-.qa-ar { font-size: 2.6rem; line-height: 1.7; color: var(--heading); }
+/* Room above for the marks Amiri draws over its letters (a shadda over a raised alif reaches above the line box). */
+.qa-ar { font-size: 2.6rem; line-height: 1.6; padding-top: 0.4em; color: var(--heading); }
 .qa-name { margin: 0; font-size: 1.35rem; line-height: 1.3; }
 .qa-mean { margin: 4px 0 0; color: var(--muted); font-size: 1rem; }
 .qa-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 10px 0 0; }
@@ -227,7 +228,7 @@ body.qa-poster-open { overflow: hidden; }
 
 /* ---- the poster, full size ---- */
 .qa-overlay {
-  position: fixed; inset: 0; z-index: 50; overflow-y: auto; background: rgba(0, 0, 0, 0.72);
+  position: fixed; inset: 0; z-index: 50; overflow-y: auto; background: #0b1b1e; overscroll-behavior: contain;
   display: flex; flex-direction: column; align-items: center; padding: 0 16px 16px;
 }
 .qa-overlay[hidden] { display: none; }
@@ -242,6 +243,10 @@ body.qa-poster-open { overflow: hidden; }
   background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.55); border-radius: 10px; font-size: 1.5rem; cursor: pointer;
 }
 .qa-overlay-mount { width: 100%; display: flex; flex-direction: column; align-items: center; }
+/* The madrasah's own description needs sign-in, so its (always greyed-out) choice is not offered here. */
+.qa-overlay-mount [data-asma-desc-src="madrasah"] { display: none; }
+.qa-overlay-mount .asma-desc-seg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.qa-overlay-mount .asma-desc-strip { margin-bottom: 12px; }
 .qa-overlay-mount .asma-desc-strip ~ .ahp-standalone { width: min(94vw, calc((94vh - 290px) * 1055 / 1491), 640px); }
 
 /* ---- computer ---- */
