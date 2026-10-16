@@ -16,6 +16,8 @@ if (!process.env.QR_BASE) {
 }
 const { chromium, newContext, openPage } = await import("../i18n-verify/harness.mjs");
 
+// QR J02 S1b: the pages Quran Study itself opens, copied unchanged.
+const S1B = ["notes.html", "bookmarks.html", "journey-map.html", "records.html", "monitor.html", "about.html", "onboarding.html", "import-notes.html", "accept-invite.html"];
 let pass = 0, fail = 0;
 const check = (ok, what) => {
   if (ok instanceof Promise) throw new Error(`check() was handed a promise: ${what}`);
@@ -26,7 +28,7 @@ const consoleNotes = new Map();
 const browser = await chromium.launch();
 try {
   for (const width of [390, 1400]) {
-    for (const [name, fn] of [["quran", quran], ["ldog", ldog]]) {
+    for (const [name, fn] of [["quran", quran], ["ldog", ldog], ...S1B.map((p) => [p, () => plainPage(p, width)])]) {
       try { await fn(width); } catch (err) { check(false, `${name} @${width} stopped early: ${String(err.message).split("\n")[0]}`); }
     }
   }
@@ -106,6 +108,28 @@ DATA.subjects.push(
   check(list.text.length > 20 && list.items > 0, `${tag} the routine list shows (${list.items} items: "${list.text.slice(0, 60)}…")`);
   const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   check(sw <= cw, `${tag} no sideways scroll (${sw} <= ${cw})`);
+  check(pageErrors.length === 0, `${tag} no page errors${pageErrors.length ? ": " + pageErrors.join(" | ") : ""}`);
+  await ctx.close();
+}
+
+/** One of the S1b pages: it loads signed in (faked), its own code runs, no page errors, no sideways scroll. */
+async function plainPage(p, width) {
+  const tag = `${p} @${width}`;
+  const ctx = await newContext(browser, { viewport: { width, height: width < 600 ? 844 : 900 } });
+  await ctx.route("**/archive.org/**", (r) => r.abort());
+  const page = await ctx.newPage();
+  const pageErrors = track(page);
+  const res = await page.goto(`${process.env.QR_BASE}/app/${p}`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1200);
+  check(res && res.ok(), `${tag} loads (${res && res.status()})`);
+  const r = await page.evaluate(() => ({
+    title: document.title.trim(),
+    checking: /Checking sign-in/.test(document.getElementById("who")?.textContent ?? ""),
+    text: document.body.innerText.trim().length,
+    sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth,
+  }));
+  check(r.title.length > 0 && r.text > 20 && !r.checking, `${tag} its code runs, past "Checking sign-in" ("${r.title}")`);
+  check(r.sw <= r.cw, `${tag} no sideways scroll (${r.sw} <= ${r.cw})`);
   check(pageErrors.length === 0, `${tag} no page errors${pageErrors.length ? ": " + pageErrors.join(" | ") : ""}`);
   await ctx.close();
 }

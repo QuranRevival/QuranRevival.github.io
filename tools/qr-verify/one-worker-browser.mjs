@@ -42,7 +42,10 @@ const check = (ok, what) => {
 };
 const browser = await chromium.launch();
 try {
-  for (const order of [["asma.html", "quranrevival.html", "ldog-study.html", "asma.html"], ["quranrevival.html", "asma.html", "ldog-study.html", "quranrevival.html"]]) {
+  // S1b: the pages Quran Study opens (notes, bookmarks, journey map, records, monitor, about, onboarding,
+  // import notes, accept invite) also call MMSA's sw-register.js; each order visits all of them.
+  const S1B = ["notes.html", "bookmarks.html", "journey-map.html", "records.html", "monitor.html", "about.html", "onboarding.html", "import-notes.html", "accept-invite.html"];
+  for (const order of [["asma.html", "quranrevival.html", "ldog-study.html", ...S1B, "asma.html"], ["quranrevival.html", ...S1B, "asma.html", "ldog-study.html", "notes.html"]]) {
     try { await visit(order); } catch (err) { check(false, `${order.join(" → ")} stopped early: ${String(err.message).split("\n")[0]}`); }
   }
 } finally {
@@ -63,7 +66,7 @@ async function visit(order) {
   for (const p of order) {
     await page.goto(`${base}/app/${p}`, { waitUntil: "load" });
     if (p === "asma.html") { asmaSeen = true; await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30000 }); }
-    await page.waitForTimeout(4000); // MMSA's sw-register registers after "load", then the worker installs (or refuses)
+    await page.waitForTimeout(2500); // MMSA's sw-register registers after "load", then the worker installs (or refuses)
     const s = await page.evaluate(async () => {
       const regs = await navigator.serviceWorker.getRegistrations();
       return {
