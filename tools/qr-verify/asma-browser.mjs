@@ -38,6 +38,10 @@ const check = (ok, what) => {
 };
 
 // ---- 1. Static: the page's import closure carries no Firebase (walks app/asma.html like import-walk.mjs). ----
+// QR J02 S1: MMSA's asma-screensaver.js (Firebase, through session-context.js) is now in QR for Quran Study, and
+// screensaver-idle.js (copied unchanged, used by Asma for its settings only) names it in its startScreensaver(),
+// which the Asma app never calls. That one edge is skipped here, and the check below proves nothing in Asma calls it.
+export const UNCALLED = new Set(["app/js/screensaver-idle.js -> app/js/asma-screensaver.js"]);
 {
   const re = /(?:import\s[^'"]*?from\s*|import\s*\(\s*|import\s+)["'](\.{1,2}\/[^"']+\.js|https?:\/\/[^"']+)["']/g;
   const seen = new Set(), remote = [];
@@ -46,10 +50,13 @@ const check = (ok, what) => {
     for (const m of fs.readFileSync(file, "utf8").matchAll(re)) {
       if (/^https?:/.test(m[1])) { remote.push(`${file} -> ${m[1]}`); continue; }
       const p = path.normalize(path.join(path.dirname(file), m[1]));
+      if (UNCALLED.has(`${file} -> ${p}`)) continue;
       if (fs.existsSync(p)) walk(p);
     }
   };
   walk("app/asma.html");
+  const callers = [...seen].filter((f) => !f.endsWith("screensaver-idle.js") && /\b(startScreensaver|openScreensaverSettings|armScreensaver)\b[^;]*from\s*["']\.\/screensaver-idle\.js["']/s.test(fs.readFileSync(f, "utf8")));
+  check(callers.length === 0, `static: nothing in Asma imports screensaver-idle.js's own start (which would load MMSA's Firebase screensaver)${callers.length ? ": " + callers.join(", ") : ""}`);
   check(seen.size > 10, `static: app/asma.html reaches ${seen.size - 1} scripts`);
   check(remote.length === 0, `static: no script in the closure imports from another site${remote.length ? ": " + remote.join(", ") : ""}`);
   const named = [...seen].filter((f) => /firebase-init\.js$|(^|\/)asma-collections\.js$|(^|\/)sw-register\.js$/.test(f));

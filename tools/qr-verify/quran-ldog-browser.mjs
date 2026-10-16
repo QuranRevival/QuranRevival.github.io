@@ -68,11 +68,17 @@ async function quran(width) {
   // The Āyah card, the way MMSA's audit part 12 opens it: āyah 36:38, then its number badge.
   await page.evaluate(() => { const el = document.getElementById("surahSelect"); el.value = "36"; el.dispatchEvent(new Event("change", { bubbles: true })); });
   await page.waitForFunction(() => document.querySelector('#readView [data-ayah-num-badge^="36:"]') || document.querySelector('#readView [data-word-occurrence^="quran-word-occurrence:v1:36:"]'), null, { timeout: 15000 }).catch(() => {});
+  // Surah 36's āyah list fills a moment after the surah changes: choose 38 once it is there.
+  await page.waitForFunction(() => !!document.querySelector('#ayahSelect option[value="38"]'), null, { timeout: 15000 }).catch(() => {});
   await page.evaluate(() => { const el = document.getElementById("ayahSelect"); el.value = "38"; el.dispatchEvent(new Event("change", { bubbles: true })); });
+  await page.waitForSelector('[data-ayah-num-badge="36:38"]', { state: "attached", timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(900);
-  await page.evaluate(() => document.querySelector('[data-ayah-num-badge="36:38"]')?.click());
+  for (let i = 0; i < 3 && !(await page.evaluate(() => !!document.querySelector("[data-ayah-sheet] .ayah-sheet-ref"))); i++) {
+    await page.evaluate(() => document.querySelector('[data-ayah-num-badge="36:38"]')?.click());
+    await page.waitForTimeout(1500);
+  }
   await page.waitForFunction(() => document.querySelector("[data-ayah-sheet] .ayah-sheet-ref"), null, { timeout: 10000 }).catch(() => {});
-  const card = await page.evaluate(() => ({ open: document.getElementById("ayahActionSheetOverlay")?.classList.contains("open"), unit: document.querySelector("[data-ayah-sheet]")?.dataset.unitKey }));
+  const card = await page.evaluate(() => ({ open: document.getElementById("ayahActionSheetOverlay")?.classList.contains("open"), unit: document.querySelector("[data-ayah-sheet]")?.dataset.unitKey, badge: !!document.querySelector('[data-ayah-num-badge="36:38"]'), surah: document.getElementById("surahSelect")?.value, ayah: document.getElementById("ayahSelect")?.value, badges: document.querySelectorAll("[data-ayah-num-badge]").length }));
   check(card.open && card.unit === "ayah:36:38", `${tag} the Āyah card opens (${JSON.stringify(card)})`);
   const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   check(sw <= cw, `${tag} no sideways scroll (${sw} <= ${cw})`);
