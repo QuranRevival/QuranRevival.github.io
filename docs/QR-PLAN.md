@@ -43,6 +43,23 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
 - `tools/qr-verify/qr-offline-browser.mjs`: Quran Study and LDOG truly offline (signed in through MMSA's harness; it
   needs `PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1` so the harness's fakes reach the worker's own fetches).
 
+- **The upgrade from the first Asma release (J02 S3b).** A phone with 76d3736's classic worker (`./sw.js?v=00.03`)
+  keeps running its cached page, whose register asks for `./sw.js?v=<new>` as a CLASSIC worker. S3's `sw.js` used
+  `import` statements, so it could not start that way and such a phone stayed on 00.03 for good (measured by
+  `tools/qr-verify/upgrade-browser.mjs`). Now `sw.js` has no imports (the version and shell list are written into it
+  by `make-precache.mjs`) and runs as classic or module. The phone sees one "new version" note; after Reload the new
+  pages ask for `/app/sw.js` as a module, and because that worker is the SAME version it takes over at once, silently.
+  Ticks, settings, the description choice and `qr-quran-v1` (the 51 surahs) survive; `qr-app-00.03` is deleted.
+- **Which browsers run module service workers** (`register(…, { type: "module" })`), as far as I know (check caniuse
+  "Module service workers" before relying on a version): Chrome and Edge from 91 (2021), Samsung Internet and other
+  Chromium browsers of that age, Safari on macOS and iOS from 15 (2021). Firefox added them much later; I am NOT sure
+  of the exact version (I believe it is a 2025–2026 release).
+- **A browser without them:** QR's own register (Asma's pages) falls back to registering the same `/app/sw.js` as a
+  classic worker, which it now can run (tested by `upgrade-browser.mjs` with module registration made to fail), so
+  Asma still works offline. MMSA's register on the copied pages asks only for a module, fails quietly and changes
+  nothing; those pages are then served by the classic worker if Asma registered one, and otherwise simply work online.
+  A browser with no service workers at all gets every page online, as before.
+
 ## Offline (QR J01 R2): the Asma app
 
 - **Worker:** `app/sw.js`, QR's own (not MMSA's copy), a CLASSIC worker so every browser with service workers runs it.

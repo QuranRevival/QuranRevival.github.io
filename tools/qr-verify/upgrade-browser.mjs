@@ -110,6 +110,7 @@ try {
     try { await upgrade(width); } catch (err) { check(false, `@${width} stopped early: ${String(err.message).split("\n")[0]}`); if (!server.listening) await startServer(); }
   }
   try { await reverse(); } catch (err) { check(false, `reverse stopped early: ${String(err.message).split("\n")[0]}`); }
+  try { await noModuleWorkers(); } catch (err) { check(false, `no-module browser stopped early: ${String(err.message).split("\n")[0]}`); if (!server.listening) await startServer(); }
 } finally {
   if (server.listening) await stopServer();
   if (!process.env.QR_OLD_TREE) fs.rmSync(OLD, { recursive: true, force: true });
@@ -220,6 +221,39 @@ async function reverse() {
     const r = await regs(page);
     check(r.length === 1 && r[0].active === `${base}/app/sw.js` && !r[0].waiting && !r[0].installing, `reverse: Quran Study first, then Asma: one registration, nothing waiting (${JSON.stringify(r).replaceAll(base, "")})`);
     check(await page.locator("[data-qa-update]").isHidden(), "reverse: no \"new version\" note");
+    await ctx.close();
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** A browser that cannot run module service workers (register with type "module" throws a TypeError, as such
+ *  browsers do): Asma still gets the worker, as a classic one, and works offline. */
+async function noModuleWorkers() {
+  ROOT = NEW;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qr-phone-"));
+  try {
+    const ctx = await profile(dir, 390);
+    await ctx.addInitScript(() => {
+      const real = navigator.serviceWorker?.register?.bind(navigator.serviceWorker);
+      if (real) navigator.serviceWorker.register = (url, opts = {}) => (opts.type === "module" ? Promise.reject(new TypeError("module service workers are not supported")) : real(url, opts));
+    });
+    const page = ctx.pages()[0] ?? await ctx.newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto(`${base}/app/asma.html`, { waitUntil: "load" });
+    await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 60000 }).catch(() => {});
+    const r = await regs(page);
+    const v = await workerVersion(page);
+    check(r.length === 1 && r[0].active === `${base}/app/sw.js` && v === NEW_V, `no-module browser: Asma's worker runs as a classic one (${JSON.stringify(r).replaceAll(base, "")}, version ${v})`);
+    await ctx.setOffline(true);
+    await stopServer();
+    await page.reload({ waitUntil: "load" }).catch(() => {});
+    await page.waitForSelector("[data-qa-grid] .qa-card", { timeout: 15000 }).catch(() => {});
+    check(await page.locator(".qa-card").count() === 99, "no-module browser: offline, the 99 Names");
+    check(errors.length === 0, `no-module browser: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
+    await ctx.setOffline(false);
+    await startServer();
     await ctx.close();
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

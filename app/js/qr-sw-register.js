@@ -28,7 +28,10 @@ export async function registerQrServiceWorker({ onUpdateReady } = {}) {
     // QR J02 S3: exactly what MMSA's sw-register.js (used unchanged by Quran Study and the pages it opens) asks for:
     // the same script, as a module, scope /app/. So every QR page shares ONE registration. The worker reads its
     // version from qr-version.js itself (a new number is a change the browser sees as an update).
-    const reg = await navigator.serviceWorker.register("/app/sw.js", { type: "module" });
+    // J02 S3b: app/sw.js runs as a classic worker too, so a browser that cannot run module workers still gets it.
+    // (On such a browser MMSA's register, which asks only for a module, fails and changes nothing.)
+    const reg = await navigator.serviceWorker.register("/app/sw.js", { type: "module" })
+      .catch((err) => (err?.name === "TypeError" ? navigator.serviceWorker.register("/app/sw.js") : Promise.reject(err)));
     const tell = (w) => { if (w && navigator.serviceWorker.controller) { waitingWorker = w; onUpdateReady?.(w); } };
     tell(reg.waiting);
     reg.addEventListener("updatefound", () => {
