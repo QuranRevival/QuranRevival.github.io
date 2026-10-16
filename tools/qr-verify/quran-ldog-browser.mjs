@@ -6,6 +6,7 @@
 //
 //   node tools/qr-verify/quran-ldog-browser.mjs     (serves itself on PORT, default 8097)
 import { spawn } from "node:child_process";
+import { routeMmsaHadith } from "./mmsa-hadith-route.mjs";
 
 const PORT = Number(process.env.PORT) || 8097;
 let server = null;
@@ -52,6 +53,7 @@ async function quran(width) {
   const tag = `quranrevival.html @${width}`;
   const ctx = await newContext(browser, { viewport: { width, height: width < 600 ? 844 : 900 } });
   await ctx.route("**/archive.org/**", (r) => r.abort());
+  await routeMmsaHadith(ctx);
   const page = await ctx.newPage();
   const pageErrors = track(page);
   await page.goto(`${process.env.QR_BASE}/app/quranrevival.html`, { waitUntil: "networkidle" });
@@ -124,6 +126,7 @@ async function plainPage(p, width) {
   const tag = `${p} @${width}`;
   const ctx = await newContext(browser, { viewport: { width, height: width < 600 ? 844 : 900 } });
   await ctx.route("**/archive.org/**", (r) => r.abort());
+  await routeMmsaHadith(ctx);
   const page = await ctx.newPage();
   const pageErrors = track(page);
   const res = await page.goto(`${process.env.QR_BASE}/app/${p}`, { waitUntil: "networkidle" });

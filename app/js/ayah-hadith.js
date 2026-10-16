@@ -6,7 +6,7 @@
 // Finding is not grading: a hit says "this hadith quotes this āyah", never whether the hadith is sound.
 import { loadOpenitiBookIndex, loadOpenitiChapter } from "./openiti-corpus.js";
 
-const BASE_URL = "../tools/hadith-data-pull/output/ayah-hadith/";
+const BASE_URL = "https://madrasatul-muslimeen.github.io/tools/hadith-data-pull/output/ayah-hadith/";
 export const AYAH_HADITH_LIMIT = 12;
 const surahCache = new Map();
 const bookCache = new Map();

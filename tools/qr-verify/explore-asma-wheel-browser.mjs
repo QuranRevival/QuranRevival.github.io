@@ -11,6 +11,7 @@ process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
 import fs from "node:fs";
 import path from "node:path";
 import http from "node:http";
+import { routeMmsaHadith } from "./mmsa-hadith-route.mjs";
 
 const arg = (k) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split("=")[1];
 const MUTATE = arg("mutate") ?? null;
@@ -67,6 +68,7 @@ async function run(width, lang) {
   const tag = `@${width} ${lang}`;
   const ctx = await newContext(browser, { appLang: lang, viewport: { width, height: 900 }, allowServiceWorker: true });
   await ctx.route("**/archive.org/**", (r) => r.abort());
+  await routeMmsaHadith(ctx);
   await ctx.addInitScript(() => { try { localStorage.setItem("mm_disable_screensaver", "1"); } catch {} });
   const page = await ctx.newPage();
   page.setDefaultTimeout(20000);

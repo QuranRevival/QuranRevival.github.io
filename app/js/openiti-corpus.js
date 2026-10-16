@@ -25,7 +25,7 @@ export const OPENITI_LICENCE = "CC BY-NC-SA 4.0";
 export const OPENITI_DOI = "10.5281/zenodo.3082463";
 export const OPENITI_CREDIT_URL = `https://doi.org/${OPENITI_DOI}`;
 
-const DEFAULT_BASE_URL = "../tools/hadith-data-pull/output/openiti-release/";
+const DEFAULT_BASE_URL = "https://madrasatul-muslimeen.github.io/tools/hadith-data-pull/output/openiti-release/";
 
 const manifestCache = new Map();
 const indexCache = new Map();
@@ -142,7 +142,7 @@ export function openitiPassageId(versionUri, n) {
 // startup (I9): concordance/summary.json names the books that have one, so a book without one costs no 404.
 // ---------------------------------------------------------------------------
 
-const CONCORDANCE_BASE_URL = "../tools/hadith-data-pull/output/concordance/";
+const CONCORDANCE_BASE_URL = "https://madrasatul-muslimeen.github.io/tools/hadith-data-pull/output/concordance/";
 const concordanceCache = new Map();
 
 /** The concordance of one book, or null if it has none: { label: {en, bn}, byN: Map(n -> cite string), firstNByCite: Map(cite integer -> n) }. */
@@ -187,7 +187,7 @@ export function buildConcordance(data) {
 // translations themselves load from HadeethEnc's own package (hadeethenc-corpus.js), when the reader opens them.
 // ---------------------------------------------------------------------------
 
-const LINKS_BASE_URL = "../tools/hadith-data-pull/output/hadeethenc-links/";
+const LINKS_BASE_URL = "https://madrasatul-muslimeen.github.io/tools/hadith-data-pull/output/hadeethenc-links/";
 const linksCache = new Map();
 
 /** Map(n -> [hadeethencId, ...]) for one book, or null if no HadeethEnc hadith is linked to it. */
@@ -213,7 +213,7 @@ export async function loadOpenitiHadeethEncLinks(versionUri, { fetchImpl = fetch
 // opened, never at startup (I9). The groups are a PROPOSAL for a person to confirm; the screen says so.
 // ---------------------------------------------------------------------------
 
-const DUA_BASE_URL = "../tools/hadith-data-pull/output/dua/";
+const DUA_BASE_URL = "https://madrasatul-muslimeen.github.io/tools/hadith-data-pull/output/dua/";
 const duaCache = new Map();
 
 /** { books: [...], groupOf: Map("<versionUri>:<n>" -> [{ versionUri, n, std }...]) } */

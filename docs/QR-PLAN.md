@@ -144,6 +144,20 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
   with the Asma app's own `asma-wheel-fit.js` (owner's QR J01 Q3 = A: keep the wording, let it wrap). A group's Names
   wheel keeps its lines and is only fitted. Check: `explore-asma-wheel-browser.mjs` (390/1440, EN/BN;
   `--mutate=fit` must fail). MMSA has the same cut (its code is the copied code); the fix would be its own to make.
+- **S1d: Hadith's home is MMSA (PCA J71, one home for every app part).** QR no longer carries Hadith data: the S1c
+  chapter files (823), the 15 book indexes and `ayah-hadith/` (130) are removed, with S1c's copy script
+  (`tools/qr-hadith/`). QR's loaders (`ayah-hadith.js`, `hadith-translations.js`, `openiti-corpus.js`; one base URL
+  each, four in `openiti-corpus.js`) read `https://madrasatul-muslimeen.github.io/tools/hadith-data-pull/output/…`.
+  GitHub Pages sends `access-control-allow-origin: *` there (measured 16 Oct: `curl -sI …/ayah-hadith/36.json`:
+  200, `application/json`, `access-control-allow-origin: *`, `cache-control: max-age=600`). The worker keeps each
+  hadith file a reader opens in `qr-hadith-v1` (only ok, CORS answers; never deleted on a version change), so a card
+  opened online shows its hadith offline (`qr-offline-browser.mjs`, `--mutate=hadith` must fail).
+  - **The one exception (PCA J71 decision 3):** `tools/hadith-data-pull/output/asma-cited-hadith.json` (66 KB, the
+    14 hadith the Names cite) stays, so the Asma app works fully offline. `extract-cited-hadith.mjs --check` (in
+    npm test) regenerates it from the MMSA checkout and fails if it differs by a byte.
+  - **Checks read MMSA's data from a local checkout, not the network:** `QR_MMSA_DIR=<MMSA checkout at 077b4db>`.
+    `tools/qr-verify/mmsa-hadith-route.mjs` answers every request to MMSA's hadith address from that checkout, with
+    GitHub's CORS header (Playwright routing; the worker's own fetches too). A check stops with a message if it is unset.
 - **Tests:** `tools/qr-verify/quran-ldog-browser.mjs` (MMSA's harness, Firebase faked at the network layer);
   `one-worker-browser.mjs`. MMSA's own suites, run against QR on 16 Oct (the results are in the QR J02 S1 report):
   green where they only need these pages and the data copied; the failures are the pages and hadith data not here.
@@ -184,7 +198,7 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
 
 Every change to a file the worker saves bumps `APP_VERSION` in `app/js/qr-version.js` (standing rule, QR Architect).
 00.01 = R2 (offline); 00.02 = R3 (screensaver); 00.03 = R4 (About and privacy page, manifest screenshots);
-00.04 = J02 S3 (one worker); 00.05 = J02 S3b (upgrade path); 00.06 = J02 S4 (front page, links); 00.07 = J02 S4b (two MMSA fixes: OpenITI credit, folder menu); 00.08 = J02 S4f (Read bar: MMSA v11.12, v11.13); 00.09 = J02 S4c (Explore Asma wheel fit).
+00.04 = J02 S3 (one worker); 00.05 = J02 S3b (upgrade path); 00.06 = J02 S4 (front page, links); 00.07 = J02 S4b (two MMSA fixes: OpenITI credit, folder menu); 00.08 = J02 S4f (Read bar: MMSA v11.12, v11.13); 00.09 = J02 S4c (Explore Asma wheel fit); 00.10 = J02 S1d (Hadith read from MMSA).
 
 ## Never changes (shared with MMSA)
 
@@ -210,7 +224,7 @@ the signed-in QR (QR J02).
 
 ## Checks (from the repository root)
 
-- `npm test`: the naming check, then every page at 390 and 1400 wide, Light and Night (loads, title, no page errors,
+- `QR_MMSA_DIR=<MMSA checkout at 077b4db> npm test` (J02 S1d: the checks read MMSA's hadith data from it): the naming check, then every page at 390 and 1400 wide, Light and Night (loads, title, no page errors,
   no sideways scroll, own background). Link Playwright once: `ln -s /opt/node22/lib/node_modules node_modules`.
 - `node tools/qr-verify/import-walk.mjs asma-study.html`: the scripts a page needs (run inside an MMSA checkout; in QR, `asma.html`).
 - `node tools/qr-verify/asma-browser.mjs`: the Asma app at 390 and 1400, English and Bangla, and ZERO requests to any
@@ -236,6 +250,9 @@ Every file QR copied from MMSA is byte-identical to MMSA `077b4db`, except the f
 
 | File | Change | Source | Job | sha256 (first 16) |
 |---|---|---|---|---|
+| `app/js/ayah-hadith.js` | Its one base-URL constant reads Hadith's data from MMSA (`https://madrasatul-muslimeen.github.io/tools/hadith-data-pull/output/ayah-hadith/`): Hadith's home is MMSA (PCA J71). | QR's own | QR J02 S1d | `1f5a006f963186c1` |
+| `app/js/hadith-translations.js` | Its one base-URL constant: `…/output/translations/` on MMSA's address (PCA J71). | QR's own | QR J02 S1d | `708d5f5542d66ea9` |
+| `app/js/openiti-corpus.js` | Its four base-URL constants (`openiti-release/`, `concordance/`, `hadeethenc-links/`, `dua/`) on MMSA's address (PCA J71). | QR's own | QR J02 S1d | `82d60e7dcea3ee9c` |
 | `app/about.html` | Only the OpenITI credit hunk (Acknowledgements: "Arabic hadith texts from OpenITI (CC BY-NC-SA 4.0)" and the line saying which texts). MMSA's other change since 077b4db (a "Legacy App - v10" link) NOT taken. | MMSA `5d14cb2` (v11.10, PR #893) | QR J02 S4b | `449599dde04d0d3e` |
 | `app/js/ayah-action-sheet.js` | Only the `hadithInfoHtml` hunk: "Source: OpenITI (CC BY-NC-SA 4.0)" under the Āyah card's related hadith (`data-ayah-hadith-credit`). | MMSA `5d14cb2` (v11.10, PR #893) | QR J02 S4b | `edf53ede49a64dd1` |
 | `app/js/i18n/bn.js` | Only the two Bangla lines of the About page's OpenITI credit. MMSA's other bn.js line since 077b4db ("Legacy App - v10 ↗") NOT taken. | MMSA `5d14cb2` (v11.10, PR #893) | QR J02 S4b | `353b599ff9bf8273` |
@@ -244,13 +261,14 @@ Every file QR copied from MMSA is byte-identical to MMSA `077b4db`, except the f
 | `tools/i18n-verify/audit-part12-words-browser.mjs` | MMSA's check as at v11.10 ("OpenITI" allowed as a source name on the Bangla page); carried to run against QR. | MMSA `5d14cb2` (v11.10, PR #893) | QR J02 S4b | `2eed642976ddd95f` |
 | `app/index.html` | QR's own front page (the same file as the site's `/index.html`), not MMSA's one-line redirect to `quranrevival.html`. | QR's own | QR J02 S4 | `0e39b69471068de1` |
 | `app/quranrevival.html` | Three hunks only. (1) The 4-line `#wbwPanel` hunk after line 3573 (it scrolls itself, so "Study this Surah" is never under the dock at 390). (2) J02 S4f: the Read bar CSS hunk after the `.ayah-card-back-pill.back-docked` rules (two `@media` blocks, max-width 420px and 340px: the way back shares a line on a small phone), byte for byte. (3) J02 S4f: in the `min-width: 900px` query, `#readToolsBtn { display: none; }` becomes `#readBar #readToolsBtn { display: none; }` with MMSA's comment (a dead ⋯ showed from 900px: `#readBar .qr-ico` beat the bare rule). MMSA's other changes since (a "Legacy App - v10" link) are NOT taken. | (1) MMSA `fb7c01d` (v11.07, PR #889); (2) MMSA `391d21b` (v11.12, PR #892); (3) MMSA `ac3b917` (v11.13, PR #895) | QR J02 S1b, J02 S4f | `d2e9f373ceb1cf27` |
-| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names; J02 S4: adds `js/qr-copied-page.js` (S4c; it starts `qr-links.js`) to each copied page as it serves it. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b, J02 S4, J02 S4c | `5d019562f44fe4bb` |
+| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names; J02 S4: adds `js/qr-copied-page.js` (S4c; it starts `qr-links.js`) to each copied page as it serves it. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b, J02 S4, J02 S4c, J02 S1d | `724b40f360d69d13` |
 
 ## Copy log (every copy from MMSA, newest first)
 
 | When (Sydney) | MMSA commit | What was copied | QR job |
 |---|---|---|---|
 | 16 Oct 2026, 4:47 pm | `391d21b`, `ac3b917` | **QR J02 S4f, hunks only:** `app/quranrevival.html` v11.12 (PR #892) the Read bar CSS after `.ayah-card-back-pill.back-docked` (two `@media` blocks), and v11.13 (PR #895) the `#readBar #readToolsBtn` rule in the 900px query. With these, QR's `quranrevival.html` equals MMSA `ac3b917` except MMSA's "Legacy App - v10" link. MMSA's suites run from a scratch copy: bookmark-marks-back 336/6 → 342/0; read-bar-tools 61/2 → 63/0; read-note-pane 208/2 → 210/0; journey-s9 288/0; journey-folder-menus 148/0; audit-part20 132/0 (`--mutate=readbardots` 120/6). | QR J02 S4f |
+| 16 Oct 2026, 3:34 pm | (none) | **QR J02 S1d, removed (not copied):** S1c's 823 chapter files, the 15 book indexes and `ayah-hadith/` (130 files): Hadith's home is MMSA (PCA J71); QR reads them from MMSA's address. `asma-cited-hadith.json` stays (decision 3). | QR J02 S1d |
 | 16 Oct 2026, 3:00 pm | `5d14cb2`, `52f6db3` | **QR J02 S4b, hunks only (not whole files):** v11.10 (PR #893) the OpenITI credit: `about.html` Acknowledgements, its 2 Bangla lines in `js/i18n/bn.js`, `ayah-action-sheet.js` `hadithInfoHtml` "Source: OpenITI (CC BY-NC-SA 4.0)"; v11.09 (PR #890) `journey-map.html` the folder menu's 56px foot padding while the Zab bar shows. Checks carried as at v11.10: `ayah-related-hadith-browser.mjs`, `audit-part12-words-browser.mjs`, `journey-folder-menus-browser.mjs` (identical to 077b4db). Each in "Deliberate changes". | QR J02 S4b |
 | 16 Oct 2026, S1c | `077b4db` | **QR J02 S1c, 823 files, 37.04 MB, byte-identical:** the hadith chapter files `tools/hadith-data-pull/output/openiti-release/split/<book>/ch-*.json` the Āyah card's "Related hadith" can reach (15 books; 3,695 hits shown across 1,023 āyāt), listed by `tools/qr-hadith/ayah-hadith-chapters.mjs <MMSA checkout> [--copy]` from `ayah-hadith/` (re-run it on a new copy point). Drift check: 1,627/0. | QR J02 S1c |
 | 16 Oct 2026, 11:19 am | `077b4db` | **QR J02 S1b, 53 files, 2.78 MB, all byte-identical:** the 9 pages Quran Study opens (`notes`, `bookmarks`, `journey-map`, `records`, `monitor`, `about`, `onboarding`, `import-notes`, `accept-invite`; 0.52 MB); the 26 scripts they reach that QR did not have (0.46 MB; 91 reached in all); `css/note-window.css`; `vendor/purify.min.js` + README; the 15 hadith-library book indexes `tools/hadith-data-pull/output/openiti-release/split/<book>/index.json` (1.73 MB, under the 3 MB limit; no chapter text). Every earlier copy re-checked with cmp: identical (`app/sw.js` is QR's own). | QR J02 S1b |

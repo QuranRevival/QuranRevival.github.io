@@ -11,12 +11,14 @@
 //       shell   ldog-study.html left out of the shell saved at install
 //       sdk     the Firebase SDK is not kept (the worker passes it to the network)
 //       carry   a new version does not carry forward what the old one held
+//       hadith  the hadith files from MMSA's address are not kept (J02 S1d)
 // Playwright's request routing (how MMSA's harness fakes Firebase) sees a service worker's own fetches only with
 // this switch; without it the worker would save the REAL firebase-init.js and SDK and the page would not sign in.
 process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
 import fs from "node:fs";
 import path from "node:path";
 import http from "node:http";
+import { routeMmsaHadith, MMSA_HADITH } from "./mmsa-hadith-route.mjs";
 
 const arg = (k) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split("=")[1];
 const MUTATE = arg("mutate") ?? null;
@@ -29,6 +31,7 @@ const MUTATIONS = {
   shell: ["/app/sw.js", (t) => t.replace('  "ldog-study.html",\n', "")],
   sdk: ["/app/sw.js", (t) => t.replace("if (isFirebaseSdk(req)) { event.respondWith(handleFirebaseSdk(req)); return; }", "")],
   carry: ["/app/sw.js", (t) => t.replace("await carryOverPreviousCache().catch(() => 0);", "")],
+  hadith: ["/app/sw.js", (t) => t.replace("event.respondWith(hadithFile(event)); return;", "return;")],
 };
 if (MUTATE) {
   const [p, edit] = MUTATIONS[MUTATE] ?? [];
@@ -131,6 +134,7 @@ async function run(width) {
   const tag = `@${width}`;
   const ctx = await newContext(browser, { viewport: { width, height: width < 600 ? 844 : 900 }, allowServiceWorker: true, extraSeedJs: LDOG_SEED });
   await ctx.route("**/archive.org/**", (r) => r.abort());
+  await routeMmsaHadith(ctx);
   const page = await ctx.newPage();
   page.setDefaultTimeout(15000);
   const errors = [];
@@ -162,8 +166,13 @@ async function run(width) {
   await page.goto(`${base}/app/ldog-study.html`, { waitUntil: "load" });
   check(/Daily Deen/.test(await ldogList(page)), `${tag} online: LDOG's list`);
   await page.waitForTimeout(800); // the worker's background saves finish
+  // J02 S1d: the hadith files come from MMSA's address; the ones the card opened are kept in qr-hadith-v1.
+  const hadithKept = (await cacheReport(page))["qr-hadith-v1"] ?? 0;
+  check(hadithKept >= 2, `${tag} the hadith files the card opened (from MMSA's address) are kept in qr-hadith-v1 (${hadithKept})`);
 
-  // Offline.
+  // Offline (and MMSA's address no longer answered either).
+  await ctx.unroute(`${MMSA_HADITH}**`);
+  await ctx.route(`${MMSA_HADITH}**`, (r) => r.abort("internetdisconnected"));
   await ctx.setOffline(true);
   await stopServer();
   await page.goto(`${base}/app/quranrevival.html`, { waitUntil: "load" }).catch(() => {});
@@ -188,6 +197,7 @@ async function run(width) {
 async function versionBump() {
   const ctx = await newContext(browser, { viewport: { width: 390, height: 844 }, allowServiceWorker: true });
   await ctx.route("**/archive.org/**", (r) => r.abort());
+  await routeMmsaHadith(ctx);
   const page = await ctx.newPage();
   page.setDefaultTimeout(30000);
   const errors = [];
@@ -198,6 +208,7 @@ async function versionBump() {
   await page.reload({ waitUntil: "load" });
   await fresh(page);
   await readFatiha(page); // kept on use: Qur'an data in qr-app- (indexes) and qr-quran-v1 (the surah)
+  await ayahCard(page); // J02 S1d: and its hadith files in qr-hadith-v1, which a new version must keep
   await page.waitForTimeout(800);
   const dataUrl = `${base}/tools/quran-data-pull/output/surah-index.json`;
   const before = await page.evaluate(async (u) => ({ keys: await caches.keys(), has: !!(await caches.match(u)) }), dataUrl);
@@ -218,6 +229,7 @@ async function versionBump() {
   await page.waitForTimeout(1500);
   const after = await page.evaluate(() => caches.keys());
   check(after.includes(`qr-app-${V2}`) && !after.includes(`qr-app-${V1}`), `update: qr-app-${V1} deleted, qr-app-${V2} kept (${after.join(", ")})`);
+  check(before.keys.includes("qr-hadith-v1"), `update: before, qr-hadith-v1 holds the hadith the card opened`);
   const kept = before.keys.filter((k) => !k.startsWith("qr-app-")).concat("mm-app-11.04");
   check(kept.every((k) => after.includes(k)), `update: only qr-app- went (${kept.join(", ")} kept)`);
   check(errors.length === 0, `update: no page errors${errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""}`);

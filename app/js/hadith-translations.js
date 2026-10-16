@@ -10,7 +10,7 @@ export const TRANSLATED_BOOKS = new Set([
   "0179MalikIbnAnas.Muwatta.Shamela0028107-ara1", "0676Nawawi.ArbacunaNawawiyya.Shamela0012836-ara1",
 ]);
 
-const DEFAULT_BASE_URL = "../tools/hadith-data-pull/output/translations/";
+const DEFAULT_BASE_URL = "https://madrasatul-muslimeen.github.io/tools/hadith-data-pull/output/translations/";
 const cache = new Map();
 function cached(key, loader) {
   if (!cache.has(key)) cache.set(key, loader().catch((err) => { cache.delete(key); throw err; }));

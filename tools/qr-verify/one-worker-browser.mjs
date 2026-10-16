@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import { routeMmsaHadith } from "./mmsa-hadith-route.mjs";
 
 const MUTATE = process.argv.find((a) => a.startsWith("--mutate="))?.split("=")[1] ?? null;
 const PORT = Number(process.env.PORT) || 8098;
@@ -61,6 +62,7 @@ process.exit(fail ? 1 : 0);
 async function visit(order) {
   // MMSA's harness, but with the worker allowed (its default turns workers off for every MMSA suite).
   const ctx = await newContext(browser, { viewport: { width: 390, height: 844 }, allowServiceWorker: true });
+  await routeMmsaHadith(ctx);
   await ctx.route("**/archive.org/**", (r) => r.abort());
   const page = await ctx.newPage();
   const errors = [];
