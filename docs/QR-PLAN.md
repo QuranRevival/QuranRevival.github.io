@@ -135,6 +135,15 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
   - Checks: `front-browser.mjs` (the front page at 390/1400, EN/BN), `links-browser.mjs` (every link on every QR page
     at 390 resolves to a page QR has or to the full Madrasah; "hide" hides them; the 404 page;
     `--mutate=inject|hide` must fail).
+- **S4c (Explore → Asma ul Husna's wheel, handed over from MMSA J29 17b):** MMSA's `wrapWheelLabel()` caps a group title
+  at 2 lines, so on the Groups wheel (19 slices) every English title ran past its slice (measured with the fit off,
+  at 390 and 1440: 19 of 19 labels outside their slice, 17 overlaps; Bangla was already inside). The worker now adds
+  ONE QR module to each copied page, `app/js/qr-copied-page.js`: it starts `qr-links.js` and, on Quran Study,
+  `qr-explore-asma-fit.js`, which after every render of `#asmaXWheelContainer` (and once the fonts are in, and when
+  the wheel's text size changes) re-wraps each group title into 1 to 4 lines and fits every label inside its slice
+  with the Asma app's own `asma-wheel-fit.js` (owner's QR J01 Q3 = A: keep the wording, let it wrap). A group's Names
+  wheel keeps its lines and is only fitted. Check: `explore-asma-wheel-browser.mjs` (390/1440, EN/BN;
+  `--mutate=fit` must fail). MMSA has the same cut (its code is the copied code); the fix would be its own to make.
 - **Tests:** `tools/qr-verify/quran-ldog-browser.mjs` (MMSA's harness, Firebase faked at the network layer);
   `one-worker-browser.mjs`. MMSA's own suites, run against QR on 16 Oct (the results are in the QR J02 S1 report):
   green where they only need these pages and the data copied; the failures are the pages and hadith data not here.
@@ -175,7 +184,7 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
 
 Every change to a file the worker saves bumps `APP_VERSION` in `app/js/qr-version.js` (standing rule, QR Architect).
 00.01 = R2 (offline); 00.02 = R3 (screensaver); 00.03 = R4 (About and privacy page, manifest screenshots);
-00.04 = J02 S3 (one worker); 00.05 = J02 S3b (upgrade path); 00.06 = J02 S4 (front page, links); 00.07 = J02 S4b (two MMSA fixes: OpenITI credit, folder menu); 00.08 = J02 S4f (Read bar: MMSA v11.12, v11.13).
+00.04 = J02 S3 (one worker); 00.05 = J02 S3b (upgrade path); 00.06 = J02 S4 (front page, links); 00.07 = J02 S4b (two MMSA fixes: OpenITI credit, folder menu); 00.08 = J02 S4f (Read bar: MMSA v11.12, v11.13); 00.09 = J02 S4c (Explore Asma wheel fit).
 
 ## Never changes (shared with MMSA)
 
@@ -235,7 +244,7 @@ Every file QR copied from MMSA is byte-identical to MMSA `077b4db`, except the f
 | `tools/i18n-verify/audit-part12-words-browser.mjs` | MMSA's check as at v11.10 ("OpenITI" allowed as a source name on the Bangla page); carried to run against QR. | MMSA `5d14cb2` (v11.10, PR #893) | QR J02 S4b | `2eed642976ddd95f` |
 | `app/index.html` | QR's own front page (the same file as the site's `/index.html`), not MMSA's one-line redirect to `quranrevival.html`. | QR's own | QR J02 S4 | `0e39b69471068de1` |
 | `app/quranrevival.html` | Three hunks only. (1) The 4-line `#wbwPanel` hunk after line 3573 (it scrolls itself, so "Study this Surah" is never under the dock at 390). (2) J02 S4f: the Read bar CSS hunk after the `.ayah-card-back-pill.back-docked` rules (two `@media` blocks, max-width 420px and 340px: the way back shares a line on a small phone), byte for byte. (3) J02 S4f: in the `min-width: 900px` query, `#readToolsBtn { display: none; }` becomes `#readBar #readToolsBtn { display: none; }` with MMSA's comment (a dead ⋯ showed from 900px: `#readBar .qr-ico` beat the bare rule). MMSA's other changes since (a "Legacy App - v10" link) are NOT taken. | (1) MMSA `fb7c01d` (v11.07, PR #889); (2) MMSA `391d21b` (v11.12, PR #892); (3) MMSA `ac3b917` (v11.13, PR #895) | QR J02 S1b, J02 S4f | `d2e9f373ceb1cf27` |
-| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names; J02 S4: adds `js/qr-links.js` to each copied page as it serves it. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b, J02 S4 | `6702a4ce7de47472` |
+| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names; J02 S4: adds `js/qr-copied-page.js` (S4c; it starts `qr-links.js`) to each copied page as it serves it. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b, J02 S4, J02 S4c | `5d019562f44fe4bb` |
 
 ## Copy log (every copy from MMSA, newest first)
 

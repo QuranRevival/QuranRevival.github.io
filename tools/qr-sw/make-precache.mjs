@@ -26,8 +26,8 @@ export function shellList() {
     for (const m of html.matchAll(/url\(['"]?(?:\.\/)?(fonts\/[^'")]+)['"]?\)/g)) extra.add(`app/${m[1]}`);
     for (const m of html.matchAll(/<script[^>]*\ssrc="(?:\.\/)?(js\/[^"#?]+\.js)"/g)) walk(`app/${m[1]}`);
   }
-  // J02 S4: app/sw.js adds this module to each copied page as it serves it (the links to pages QR does not hold).
-  walk("app/js/qr-links.js");
+  // J02 S4/S4c: app/sw.js adds this module to each copied page as it serves it (links; the Explore Asma wheel fit).
+  walk("app/js/qr-copied-page.js");
   for (const css of [...extra].filter((f) => f.endsWith(".css"))) {
     for (const m of fs.readFileSync(css, "utf8").matchAll(/url\(['"]?\.\.\/((?:fonts|img)\/[^'")]+)['"]?\)/g)) extra.add(`app/${m[1]}`);
   }
