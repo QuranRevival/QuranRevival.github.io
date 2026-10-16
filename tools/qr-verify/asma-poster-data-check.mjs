@@ -42,6 +42,11 @@ const m112 = models.find((m) => m.number === 112), m113 = models.find((m) => m.n
 check(!!m112 && noMarks(m112.arabic) === "المالك" && m112.description !== m113.description && (POSTER_ARABIC["112"] ?? null) !== POSTER_ARABIC["113"],
   "Al-Maalik (112) shows المالك, not Al-Maleek's المَلِيكُ, and not Al-Maleek's description", JSON.stringify({ a: m112?.arabic, p: POSTER_ARABIC["112"] ?? null }));
 
+// QR J01 R5b: Allah's (132) meaning line is the generator's MEANING_132 (the owner's Q8), never the braces as printed.
+const want132 = fs.readFileSync("tools/asma-poster/build-poster-data.mjs", "utf8").match(/const MEANING_132 = "([^"]+)"/)?.[1];
+const m132 = models.find((m) => m.number === 132);
+check(!!want132 && m132?.meaning === want132, `132 Allah's meaning line is the one chosen in the generator ("${want132}")`, JSON.stringify(m132?.meaning));
+
 // QR: a poster Arabic shared by two Names only where the Name list gives both the same word.
 const byNumber = Object.fromEntries(names.map((n) => [String(n.number), n]));
 const groups = new Map();

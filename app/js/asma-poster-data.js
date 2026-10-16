@@ -274,7 +274,7 @@ export const POSTER_MEANINGS = Object.freeze({
  "124": "The Knower (of the Seen & Unseen)",
  "127": "The Pure One",
  "128": "The Helper",
- "132": "{The Grand Name}"
+ "132": "The Grand Name"
 });
 
 /** English Surah names, index = Surah number - 1 (surah-index.json's nameEnglish). */
@@ -389,5 +389,11 @@ export const POSTER_REWORDED = Object.freeze([
   "from": "The One who is absolutely independent upon who all depend.",
   "to": "The One who is absolutely independent, upon whom all depend.",
   "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 132,
+  "from": "{The Grand Name}",
+  "to": "The Grand Name",
+  "why": "the owner's Q8 (QR J01 R5b)"
  }
 ]);

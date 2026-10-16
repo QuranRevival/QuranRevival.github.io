@@ -1,17 +1,17 @@
-// QR J02 S3b: a real phone moves from the Asma app as it may first go live (qr/r4-store-ready, 76d3736: a CLASSIC
-// worker registered as ./sw.js?v=00.03, caches qr-app-00.03 and qr-quran-v1) to this branch (one MODULE worker at
+// QR J02 S3b: a real phone moves from the Asma app as it is live (fe028eb, 00.04, live 17 Oct; before that 76d3736, 00.03: a CLASSIC
+// worker registered as ./sw.js?v=<old version>, caches qr-app-<old version> and qr-quran-v1) to this branch (one MODULE worker at
 // /app/sw.js for every QR page). Same address, same browser profile, the site's files swapped underneath.
 // At 390 and 1400:
 //   old site: ticks Studied on 3 Names, sets the screensaver, chooses a description, saves every āyah for offline;
 //   new site: the reader sees at most ONE "new version" note, taps Reload, and ends with exactly one registration,
 //   /app/sw.js at the new version, nothing waiting; their ticks and settings are there; qr-quran-v1 still holds the
-//   51 surah files (not one fetched again) and qr-app-00.03 is gone; offline, Asma and its āyāt still work.
+//   51 surah files (not one fetched again) and the old qr-app cache is gone; offline, Asma and its āyāt still work.
 // Then the reverse: a first visit to Quran Study after the upgrade gets one registration, shared by Asma.
 //
 //   node tools/qr-verify/upgrade-browser.mjs [--width=390] [--mutate=quran]
 //       --mutate=quran   the new worker's activate also deletes qr-quran-v1; the suite must FAIL
 //
-// The 76d3736 tree is exported with `git archive` into a scratch folder (QR_OLD_TREE, default a temp folder); that
+// The OLD_COMMIT tree is exported with `git archive` into a scratch folder (QR_OLD_TREE, default a temp folder); that
 // branch is never touched.
 import fs from "node:fs";
 import os from "node:os";
@@ -23,7 +23,8 @@ import { chromium } from "playwright";
 const arg = (k) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split("=")[1];
 const WIDTHS = arg("width") ? [Number(arg("width"))] : [390, 1400];
 const MUTATE = arg("mutate") ?? null;
-const OLD_COMMIT = "76d3736";
+const OLD_COMMIT = "fe028eb"; // the Asma app as LIVE since 17 Oct 8:38 am (00.04; was 76d3736, 00.03, before the release)
+const OLD_V = "00.04";
 const PORT = Number(process.env.PORT) || 8100;
 const NEW = process.cwd();
 const OLD = process.env.QR_OLD_TREE || fs.mkdtempSync(path.join(os.tmpdir(), "qr-old-"));
@@ -136,7 +137,7 @@ async function upgrade(width, route) {
   const tag = `@${width} ${route}`;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qr-phone-"));
   try {
-    // ---- The old site (76d3736). ----
+    // ---- The old site (OLD_COMMIT). ----
     ROOT = OLD;
     let ctx = await profile(dir, width);
     let page = ctx.pages()[0] ?? await ctx.newPage();
@@ -146,7 +147,7 @@ async function upgrade(width, route) {
     await page.goto(`${base}/app/asma.html`, { waitUntil: "load" });
     await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 60000 });
     const oldSw = await page.evaluate(() => navigator.serviceWorker.controller.scriptURL);
-    check(/\/app\/sw\.js\?v=00\.03$/.test(oldSw), `${tag} old site: its classic worker runs (${oldSw.replace(base, "")})`);
+    check(oldSw.endsWith(`/app/sw.js?v=${OLD_V}`), `${tag} old site: its classic worker runs (${oldSw.replace(base, "")})`);
     for (const n of [1, 2, 3]) {
       await page.goto(`${base}/app/asma.html#v=name&n=${n}`, { waitUntil: "load" });
       await page.waitForSelector(`[data-qa-detail="${n}"]`);
@@ -165,7 +166,7 @@ async function upgrade(width, route) {
     await page.waitForFunction(() => /✓/.test(document.querySelector("[data-qa-offline-note]")?.textContent ?? ""), null, { timeout: 120000 });
     const before = await page.evaluate(() => ({ studied: localStorage.getItem("qr_asma_studied_v1"), saver: localStorage.getItem("mm_screensaver"), desc: localStorage.getItem("mmsa.asmaDescriptionSource") }));
     const c0 = await cacheReport(page);
-    check(c0["qr-quran-v1"] === 51 && c0["qr-app-00.03"] > 0, `${tag} old site: all 51 surah files saved, qr-app-00.03 in use`);
+    check(c0["qr-quran-v1"] === 51 && c0[`qr-app-${OLD_V}`] > 0, `${tag} old site: all 51 surah files saved, qr-app-${OLD_V} in use`);
     await ctx.close();
 
     // ---- The new site, same address, same profile. ----
@@ -214,7 +215,7 @@ async function upgrade(width, route) {
     check(c1["qr-quran-v1"] === 51, `${tag} qr-quran-v1 still holds the 51 surah files (${c1["qr-quran-v1"]})`);
     const refetched = hits.slice(from).filter((h) => h.p.startsWith("/tools/quran-data-pull/output/surahs/")).length;
     check(refetched === 0, `${tag} no surah file was downloaded again (${refetched})`);
-    check(!("qr-app-00.03" in c1) && (c1[`qr-app-${NEW_V}`] ?? 0) >= 190, `${tag} qr-app-00.03 deleted, qr-app-${NEW_V} in use (${Object.entries(c1).map(([k, n]) => `${k} ${n}`).join(", ")}; J02 S1e: the install list is 198 files)`);
+    check(!(`qr-app-${OLD_V}` in c1) && (c1[`qr-app-${NEW_V}`] ?? 0) >= 190, `${tag} qr-app-${OLD_V} deleted, qr-app-${NEW_V} in use (${Object.entries(c1).map(([k, n]) => `${k} ${n}`).join(", ")}; J02 S1e: the install list is 198 files)`);
 
     // ---- Offline after the upgrade. ----
     if (route !== "asma") { check(errors.length === 0, `${tag} no page errors${errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""}`); await ctx.close(); return; }
