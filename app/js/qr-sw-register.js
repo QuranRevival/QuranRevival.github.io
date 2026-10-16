@@ -1,4 +1,5 @@
-// QR J01 R2 (QR-only): registers app/sw.js for the Asma page, and nothing else. MMSA's sw-register.js is not used.
+// QR J01 R2 (QR-only): registers app/sw.js for the Asma pages. (J02 S3: Quran Study's pages register the same worker
+// through MMSA's unchanged sw-register.js; both ask for the same script and type, so there is one registration.)
 //
 // Kill switches, as in MMSA: ?nosw in the address, or localStorage mm_disable_service_worker = "1". Either one
 // unregisters the worker and skips registering it (the page then works straight from the network).
@@ -24,8 +25,10 @@ export async function registerQrServiceWorker({ onUpdateReady } = {}) {
   }
   navigator.serviceWorker.addEventListener("controllerchange", () => { if (reloadAsked) location.reload(); });
   try {
-    const { APP_VERSION } = await import("./qr-version.js");
-    const reg = await navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(APP_VERSION)}`, { scope: "./" });
+    // QR J02 S3: exactly what MMSA's sw-register.js (used unchanged by Quran Study and the pages it opens) asks for:
+    // the same script, as a module, scope /app/. So every QR page shares ONE registration. The worker reads its
+    // version from qr-version.js itself (a new number is a change the browser sees as an update).
+    const reg = await navigator.serviceWorker.register("/app/sw.js", { type: "module" });
     const tell = (w) => { if (w && navigator.serviceWorker.controller) { waitingWorker = w; onUpdateReady?.(w); } };
     tell(reg.waiting);
     reg.addEventListener("updatefound", () => {

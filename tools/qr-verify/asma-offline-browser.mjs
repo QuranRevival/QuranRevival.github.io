@@ -35,8 +35,8 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; cha
 const overrides = new Map(); // url path -> (text) => text
 const MUTATIONS = {
   precache: (t) => t.replace('  "../tools/hadith-data-pull/output/asma-cited-hadith.json",\n', ""),
-  cleanup: (t) => t.replace('if (key.startsWith("qr-app-") && key !== APP_CACHE) await caches.delete(key);', "void key;"),
-  skipwaiting: (t) => t.replace('event.waitUntil(caches.open(APP_CACHE)', "self.skipWaiting(); event.waitUntil(caches.open(APP_CACHE)"),
+  cleanup: (t) => t.replace('if (key.startsWith("qr-app-") && key !== APP_CACHE) await caches.delete(key);', 'if (false) await caches.delete(key);'),
+  skipwaiting: (t) => t.replace('  event.waitUntil((async () => {\n    const cache = await caches.open(APP_CACHE);', '  self.skipWaiting();\n  event.waitUntil((async () => {\n    const cache = await caches.open(APP_CACHE);'),
 };
 if (MUTATE) {
   if (!MUTATIONS[MUTATE]) throw new Error(`Unknown mutation "${MUTATE}"`);
@@ -114,6 +114,21 @@ try {
 console.log(`\n${pass} passed, ${fail} failed${MUTATE ? ` (mutation: ${MUTATE})` : ""}`);
 process.exit(fail ? 1 : 0);
 
+/** Which version a worker is: it answers QR's GET_VERSION message ("controller", or the registration's "waiting"). */
+async function workerVersion(page, which) {
+  return page.evaluate(async (w) => {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sw = w === "controller" ? navigator.serviceWorker.controller : reg?.[w];
+    if (!sw) return null;
+    return new Promise((resolve) => {
+      const ch = new MessageChannel();
+      ch.port1.onmessage = (e) => resolve(e.data);
+      sw.postMessage({ type: "GET_VERSION" }, [ch.port2]);
+      setTimeout(() => resolve(null), 3000);
+    });
+  }, which);
+}
+
 async function controlled(page) {
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30000 });
 }
@@ -137,9 +152,17 @@ async function runWidth(width) {
   await page.goto(`${base}/app/asma.html`, { waitUntil: "load" });
   await controlled(page);
   const caches1 = await cacheReport(page);
-  check(caches1[`qr-app-${V1}`] === precache.length, `${tag} the worker saved the page's ${precache.length} files in qr-app-${V1} (${caches1[`qr-app-${V1}`]})`);
+  // J02 S3: the same cache also holds Quran Study's shell; every file of Asma's own list must be in it.
+  const missingSaved = await page.evaluate(async ([name, files]) => {
+    const c = await caches.open(name);
+    const out = [];
+    for (const f of files) if (!(await c.match(new URL(f, location.origin + "/").href, { ignoreSearch: true }))) out.push(f);
+    return out;
+  }, [`qr-app-${V1}`, precache]);
+  check(missingSaved.length === 0 && caches1[`qr-app-${V1}`] >= precache.length, `${tag} the worker saved all ${precache.length} of Asma's files in qr-app-${V1} (${caches1[`qr-app-${V1}`]} files in it)${missingSaved.length ? "; missing " + missingSaved.join(", ") : ""}`);
   const sw = await page.evaluate(() => navigator.serviceWorker.controller.scriptURL);
-  check(new RegExp(`/app/sw\\.js\\?v=${reV(V1)}$`).test(sw), `${tag} the worker is app/sw.js?v=${V1} (${sw.replace(base, "")})`);
+  const v = await workerVersion(page, "controller");
+  check(sw === `${base}/app/sw.js` && v === V1, `${tag} the worker is app/sw.js, version ${v} (${sw.replace(base, "")})`);
   const scope = await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).scope);
   check(scope === `${base}/app/`, `${tag} its scope is /app/`);
   check(await page.locator("[data-qa-update]").isHidden(), `${tag} no "new version" note on a first visit`);
@@ -230,8 +253,9 @@ async function versionBump() {
   await page.reload({ waitUntil: "load" });
   await page.waitForSelector("[data-qa-update]:not([hidden])", { timeout: 30000 }).catch(() => {});
   check(await page.locator("[data-qa-update]").isVisible(), `update: "A new version is ready · Reload" shows`);
-  const still = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL ?? "");
-  check(still.endsWith(`v=${V1}`), `update: the page keeps running the version it opened with until Reload (${still.replace(base, "")})`);
+  const still = await workerVersion(page, "controller");
+  const waitingV = await workerVersion(page, "waiting");
+  check(still === V1 && waitingV === V2, `update: the page keeps running ${still} until Reload, ${waitingV} waits`);
   const note = page.locator("[data-qa-update] button");
   const nb = await note.boundingBox();
   check(nb && nb.height >= 40, `update: Reload is finger-sized (${Math.round(nb?.height ?? 0)}px)`);
@@ -239,9 +263,10 @@ async function versionBump() {
   check(!!mid[`qr-app-${V2}`] && !!mid[`qr-app-${V1}`], `update: the new version saved qr-app-${V2} while the old one still serves (${Object.keys(mid).join(", ")})`);
   void marker;
   await Promise.all([page.waitForEvent("load", { timeout: 30000 }), note.click()]);
-  await page.waitForFunction((v) => (navigator.serviceWorker.controller?.scriptURL ?? "").endsWith(`v=${v}`), V2, { timeout: 30000 }).catch(() => {});
-  const now = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL ?? "");
-  check(now.endsWith(`v=${V2}`), `update: after Reload, the new version runs (${now.replace(base, "")})`);
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30000 }).catch(() => {});
+  let now = null;
+  for (let i = 0; i < 20 && now !== V2; i++) { now = await workerVersion(page, "controller"); if (now !== V2) await page.waitForTimeout(500); }
+  check(now === V2, `update: after Reload, the new version runs (${now})`);
   const after = await cacheReport(page);
   check(!!after[`qr-app-${V2}`] && !after[`qr-app-${V1}`], `update: qr-app-${V1} deleted, qr-app-${V2} kept (${Object.keys(after).join(", ")})`);
   check(!!after["qr-quran-v1"] && !!after["mm-app-11.04"] && !!after["someone-else"], `update: only qr-app- caches are deleted (qr-quran-v1, mm-app-11.04 and someone-else kept)`);

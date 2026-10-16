@@ -1,20 +1,31 @@
-// QR J01 R2 (QR-only): the offline worker for the Asma app (app/asma.html). A CLASSIC worker (works in every browser
-// that has service workers), registered only by app/js/qr-sw-register.js as ./sw.js?v=<APP_VERSION>, scope /app/.
+// QR's one offline worker for every QR page (QR J02 S3): the Asma app (J01 R2) and Quran Study, LDOG and the pages
+// they open (copied from MMSA, J02 S1/S1b). A MODULE worker, registered as "/app/sw.js" (scope /app/) by BOTH
+// page-side registers: QR's app/js/qr-sw-register.js (Asma) and MMSA's unchanged app/js/sw-register.js (the copied
+// pages) ask for exactly the same script and type, so there is ONE registration and nothing flips between copies.
+// The version comes from app/js/qr-version.js (imported: a new number is a byte change the browser sees as an update).
 //
-// Caches (QR names only; MMSA's mm- caches live on another site and are never touched):
-//   qr-app-<version>  everything the Asma page needs, saved when the worker installs (about 1.6 MB). A new version
-//                     saves a fresh copy; on activate every OTHER qr-app- cache is deleted, and nothing else.
-//   qr-quran-v1       the Qur'an surah files (51 of them, 19 MB in all), saved one by one as a Name that cites them
-//                     is opened, or all at once by "Save for offline" on the page. Kept across versions.
-// A new worker WAITS: the page shows "A new version is ready · Reload" and only the reader's tap swaps it in.
+// It reproduces MMSA's app/sw.js (077b4db) for Quran Study, under QR's names, and keeps Asma's behaviour:
+//   qr-app-<version>  saved at install: Asma's list below + the copied pages' shell (app/js/qr-precache.js, scripts,
+//                     styles, fonts, images; ~6 MB in all). A new version first carries forward every file the old
+//                     qr-app- cache held (MMSA's carry-over), so the Qur'an and hadith data a reader had opened stay.
+//                     Other app and data files (Qur'an data, hadith data) are kept the first time they are fetched,
+//                     and refreshed in the background (MMSA's stale-while-revalidate).
+//   qr-quran-v1       Asma's: the surah files, kept on first use or by "Save for offline"; kept across versions.
+//   qr-qf-fonts-v1    Quran Foundation's Mushaf page fonts, on first use, refreshed weekly (MMSA's mm-qf-fonts-v1).
+//   qr-ext-v1         the Firebase SDK files (www.gstatic.com/firebasejs/10.12.2/), on first use (MMSA's mm-ext-v1).
+//   qr-mushaf-v1      the Mushaf layout and surah-header font, on first use, refreshed daily (MMSA's mm-mushaf-v1).
+// Activate deletes the old qr-app- cache, and a qr-qf-fonts-/qr-ext-/qr-mushaf- cache only if its own format is
+// ever renamed; never qr-quran-v1, never anything not "qr-". A new worker WAITS for the reader's tap (Asma's
+// "Reload", MMSA's "Updated — tap to reload"); nothing is swapped mid-visit.
+import { APP_VERSION } from "./js/qr-version.js";
+import { SHELL } from "./js/qr-precache.js";
 
-const VERSION = new URL(self.location.href).searchParams.get("v") || "dev";
-const APP_CACHE = `qr-app-${VERSION}`;
+const APP_CACHE = `qr-app-${APP_VERSION}`;
 const QURAN_CACHE = "qr-quran-v1";
 const SURAH_PATH = "/tools/quran-data-pull/output/surahs/";
 
-// Relative to this file (/app/). tools/qr-verify/asma-offline-browser.mjs checks this list covers every script the
-// page reaches, every font, image, stylesheet and data file it uses.
+// Asma's own list (J01 R2), relative to this file (/app/). tools/qr-verify/asma-offline-browser.mjs checks it covers
+// every script the Asma pages reach, every font, image, stylesheet and data file they use.
 const PRECACHE = [
   "asma.html",
   "asma-about.html",
@@ -70,50 +81,181 @@ const PRECACHE = [
   "../tools/hadith-data-pull/output/asma-cited-hadith.json",
 ];
 
-// ONE worker for /app/ (QR J02 S1). MMSA's pages copied into QR (Quran Study, LDOG) call MMSA's sw-register.js,
-// unchanged, which registers "/app/sw.js" as a MODULE worker with no ?v=. Measured: that turned THIS file into a
-// second, "dev" version of itself (cache qr-app-dev) and the two then took turns waiting, each page offering an
-// update the other undid. So a copy started without ?v= (only MMSA's register does that; QR's own always passes
-// one) refuses to install: the Asma worker already running stays, and a first visit to those pages installs
-// nothing. QR's full worker for every page comes in QR J02 S3.
-const STARTED_BY_QR = new URL(self.location.href).searchParams.has("v");
+const PRECACHE_URLS = new Set([...PRECACHE, ...SHELL].map((p) => new URL(p, self.location.href).href));
+
+// ---- MMSA's rules for which same-origin files are kept (077b4db), plus the hadith data QR serves (J02 S1c) ----
+const CACHEABLE_PATH_PREFIXES = ["/app/", "/tools/quran-data-pull/output/", "/tools/hadith-data-pull/output/"];
+function isCacheable(request) {
+  if (request.method !== "GET") return false;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return false;
+  if (!CACHEABLE_PATH_PREFIXES.some((p) => url.pathname.startsWith(p))) return false;
+  return /\.(?:html|js|mjs|css|json|woff2?|ttf|otf|png|jpe?g|svg|webp)$/i.test(url.pathname);
+}
+
+// ---- Quran Foundation Mushaf page fonts (MMSA issue #335): cache-first, refreshed in the background weekly ----
+const QF_FONT_CACHE_NAME = "qr-qf-fonts-v1";
+const QF_FONT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const QF_FONT_ORIGIN = "https://verses.quran.foundation";
+const QF_FONT_PATH_PREFIXES = ["/fonts/quran/hafs/v2/woff2/", "/fonts/quran/hafs/v4/colrv1/woff2/"];
+const CACHED_AT_HEADER = "x-qr-cached-at";
+function isQuranFoundationFont(request) {
+  if (request.method !== "GET") return false;
+  let url;
+  try { url = new URL(request.url); } catch { return false; }
+  return url.origin === QF_FONT_ORIGIN && QF_FONT_PATH_PREFIXES.some((p) => url.pathname.startsWith(p));
+}
+function cachedAtMs(response) {
+  const n = Number(response.headers.get(CACHED_AT_HEADER));
+  return Number.isFinite(n) ? n : 0;
+}
+async function stampAndStore(cache, request, response) {
+  if (!response || response.status !== 200) return;
+  const headers = new Headers(response.headers);
+  headers.set(CACHED_AT_HEADER, String(Date.now()));
+  const body = await response.arrayBuffer();
+  await cache.put(request, new Response(body, { status: response.status, statusText: response.statusText, headers }));
+}
+async function cacheFirstWithBackgroundRefresh(event, cacheName, maxAgeMs) {
+  const { request } = event;
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  if (cached) {
+    if (Date.now() - cachedAtMs(cached) > maxAgeMs) {
+      event.waitUntil(fetch(request).then((response) => stampAndStore(cache, request, response)).catch(() => null));
+    }
+    return cached;
+  }
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) await stampAndStore(cache, request, response.clone());
+    return response;
+  } catch {
+    return Response.error();
+  }
+}
+
+// ---- The Firebase SDK files (MMSA issue #339): pinned by version in the URL, so kept forever once fetched ----
+const EXT_SDK_CACHE_NAME = "qr-ext-v1";
+const EXT_SDK_ORIGIN = "https://www.gstatic.com";
+const EXT_SDK_PATH_PREFIX = "/firebasejs/10.12.2/";
+function isFirebaseSdk(request) {
+  if (request.method !== "GET") return false;
+  let url;
+  try { url = new URL(request.url); } catch { return false; }
+  return url.origin === EXT_SDK_ORIGIN && url.pathname.startsWith(EXT_SDK_PATH_PREFIX);
+}
+async function handleFirebaseSdk(request) {
+  const cache = await caches.open(EXT_SDK_CACHE_NAME);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) await cache.put(request, response.clone());
+    return response;
+  } catch {
+    return Response.error();
+  }
+}
+
+// ---- The Mushaf's layout JSON and surah-header font (MMSA issue #339), from MMSA's repository ----
+const MUSHAF_CACHE_NAME = "qr-mushaf-v1";
+const MUSHAF_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const MUSHAF_URLS = new Set([
+  "https://raw.githubusercontent.com/Madrasatul-Muslimeen/Madrasatul-Muslimeen.github.io/main/mushaf/mushaf-madani-v2.json",
+  "https://raw.githubusercontent.com/Madrasatul-Muslimeen/Madrasatul-Muslimeen.github.io/main/mushaf/QCF_SurahHeader_COLOR-Regular.woff2",
+]);
+const isMushafAsset = (request) => request.method === "GET" && MUSHAF_URLS.has(request.url);
+
+// ---- A new version carries forward what the old one held (MMSA, 6 Oct 2026), revalidated ----
+const CARRY_CONCURRENCY = 6;
+async function carryOverPreviousCache() {
+  const names = (await caches.keys()).filter((n) => n.startsWith("qr-app-") && n !== APP_CACHE);
+  if (!names.length) return 0;
+  const urls = new Set();
+  for (const n of names) for (const req of await (await caches.open(n)).keys()) urls.add(req.url);
+  const cache = await caches.open(APP_CACHE);
+  const queue = [...urls];
+  let kept = 0;
+  async function worker() {
+    while (queue.length) {
+      const u = queue.shift();
+      try {
+        const request = new Request(u);
+        if (!isCacheable(request) || await cache.match(request)) continue;
+        const response = await fetch(request, { cache: "no-cache" });
+        if (response && response.ok) { await cache.put(request, response); kept++; }
+      } catch { /* best effort: fetched again when next asked for */ }
+    }
+  }
+  await Promise.all(Array.from({ length: CARRY_CONCURRENCY }, worker));
+  return kept;
+}
 
 self.addEventListener("install", (event) => {
-  if (!STARTED_BY_QR) {
-    event.waitUntil(Promise.reject(new Error("QR's worker is registered by app/js/qr-sw-register.js only.")));
-    return;
-  }
-  // Straight from the network (not the browser's HTTP cache), so a new version never saves an old file.
-  event.waitUntil(caches.open(APP_CACHE).then((cache) => cache.addAll(PRECACHE.map((p) => new Request(p, { cache: "reload" })))));
+  // Straight from the network (not the browser's HTTP cache), so a new version never saves an old file. Then the
+  // carry-over. No skipWaiting(): the new version waits for the reader.
+  event.waitUntil((async () => {
+    const cache = await caches.open(APP_CACHE);
+    await cache.addAll([...PRECACHE, ...SHELL].map((p) => new Request(p, { cache: "reload" })));
+    await carryOverPreviousCache().catch(() => 0);
+  })());
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     for (const key of await caches.keys()) {
       if (key.startsWith("qr-app-") && key !== APP_CACHE) await caches.delete(key);
+      else if (key.startsWith("qr-qf-fonts-") && key !== QF_FONT_CACHE_NAME) await caches.delete(key);
+      else if (key.startsWith("qr-ext-") && key !== EXT_SDK_CACHE_NAME) await caches.delete(key);
+      else if (key.startsWith("qr-mushaf-") && key !== MUSHAF_CACHE_NAME) await caches.delete(key);
     }
     await self.clients.claim();
   })());
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data?.type === "SKIP_WAITING") self.skipWaiting(); // only ever sent when the reader taps Reload
+  const data = event.data || {};
+  // Asma's Reload sends SKIP_WAITING; MMSA's "Updated — tap to reload" sends skipWaiting. Only ever on a tap.
+  if (data.type === "SKIP_WAITING" || data.type === "skipWaiting") { self.skipWaiting(); return; }
+  // QR's checks ask a worker which version it is (the script address no longer carries it).
+  if (data.type === "GET_VERSION") { event.ports?.[0]?.postMessage(APP_VERSION); return; }
+  // MMSA's sw-register.js: the files a page loaded before this worker controlled it, to keep now (MMSA's "warm").
+  if (data.type === "warm" && Array.isArray(data.urls)) {
+    event.waitUntil((async () => {
+      const cache = await caches.open(APP_CACHE);
+      await Promise.all(data.urls.map(async (u) => {
+        try {
+          const request = new Request(u);
+          if (!isCacheable(request) || new URL(u).pathname.startsWith(SURAH_PATH) || await cache.match(request)) return;
+          const response = await fetch(request);
+          if (response && response.ok) await cache.put(request, response);
+        } catch { /* best effort */ }
+      }));
+    })());
+  }
 });
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
+  if (isQuranFoundationFont(req)) { event.respondWith(cacheFirstWithBackgroundRefresh(event, QF_FONT_CACHE_NAME, QF_FONT_MAX_AGE_MS)); return; }
+  if (isFirebaseSdk(req)) { event.respondWith(handleFirebaseSdk(req)); return; }
+  if (isMushafAsset(req)) { event.respondWith(cacheFirstWithBackgroundRefresh(event, MUSHAF_CACHE_NAME, MUSHAF_MAX_AGE_MS)); return; }
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return; // other sites: the browser as usual
+  if (url.origin !== self.location.origin) return; // other sites, Firestore and sign-in: the browser as usual
   if (url.pathname.startsWith(SURAH_PATH)) { event.respondWith(quranFile(req)); return; }
-  // The version file asks the network first, so an online visit always learns of a new version.
+  // The version file asks the network first, so an online visit always learns of a new number (Asma, R2).
   if (url.pathname.endsWith("/js/qr-version.js")) { event.respondWith(networkFirst(req)); return; }
-  event.respondWith(cacheFirst(req));
+  // A page or file saved at install: the saved copy (this version's code, never swapped mid-visit).
+  const key = `${url.origin}${url.pathname}`;
+  if (PRECACHE_URLS.has(key)) { event.respondWith(cacheFirst(req)); return; }
+  if (isCacheable(req)) { event.respondWith(staleWhileRevalidate(event)); return; }
 });
 
 async function cacheFirst(req) {
   const cache = await caches.open(APP_CACHE);
-  const hit = await cache.match(req, { ignoreSearch: req.mode === "navigate" });
+  const hit = await cache.match(req, { ignoreSearch: true });
   return hit || fetch(req);
 }
 
@@ -132,4 +274,18 @@ async function quranFile(req) {
   const res = await fetch(req);
   if (res.ok) await cache.put(req, res.clone());
   return res;
+}
+
+// MMSA's: a saved copy answers at once, and a fresh copy is fetched for next time.
+async function staleWhileRevalidate(event) {
+  const { request } = event;
+  const cache = await caches.open(APP_CACHE);
+  const cached = await cache.match(request);
+  const revalidate = fetch(request).then((response) => {
+    if (response && response.ok) cache.put(request, response.clone());
+    return response;
+  }).catch(() => null);
+  event.waitUntil(revalidate);
+  if (cached) return cached;
+  return (await revalidate) || Response.error();
 }

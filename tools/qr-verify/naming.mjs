@@ -4,10 +4,9 @@
 // cache name survives a copy from MMSA. Passes trivially until app/sw.js exists.
 import fs from "node:fs";
 
-// QR J01 R2: app/sw.js is QR's own worker (the Asma app), not a copy of MMSA's: it has the app cache and a Qur'an
-// cache, and none of MMSA's font, SDK or Mushaf caches yet. So the check is on intent: every cache name it uses
-// starts with "qr-", the app cache is qr-app-<version>, no MMSA (mm-) cache name appears, and the old-cache
-// clean-up only ever matches qr-app- caches.
+// QR's own worker (app/sw.js; J01 R2, J02 S3): every cache it uses starts with "qr-", the app cache is
+// qr-app-<version>, MMSA's other three caches appear under QR names (qr-qf-fonts-v1, qr-ext-v1, qr-mushaf-v1) beside
+// Asma's qr-quran-v1, no MMSA (mm-) cache name appears, and the clean-up only matches QR prefixes, never qr-quran.
 let pass = 0, fail = 0;
 const check = (ok, what) => { ok ? pass++ : fail++; console.log(`${ok ? "ok  " : "FAIL"} ${what}`); };
 
@@ -23,9 +22,12 @@ if (!fs.existsSync(sw)) {
   const consts = Object.fromEntries([...src.matchAll(/const ([A-Z_]+) = (["'`])([^"'`]+)\2/g)].map((m) => [m[1], m[3]]));
   const literal = names.map((n) => consts[n] ?? n.replace(/^["'`]|["'`]$/g, "")).filter((n) => n !== "key");
   check(literal.length > 0 && literal.every((n) => n.startsWith("qr-")), `every cache ${sw} opens starts with qr- (${literal.join(", ")})`);
+  // J02 S3: the worker now also holds MMSA's three other caches under QR names (QR-PLAN's table).
+  for (const name of ["qr-qf-fonts-v1", "qr-ext-v1", "qr-mushaf-v1", "qr-quran-v1"]) check(src.includes(`"${name}"`), `${sw} uses ${name}`);
   const prefixes = [...src.matchAll(/startsWith\(\s*["'`]([a-z-]+)["'`]/g)].map((m) => m[1]).filter((p) => p.endsWith("-"));
-  check(prefixes.length > 0 && prefixes.every((p) => p === "qr-app-"), `old-cache clean-up only touches qr-app- caches (${prefixes.join(", ") || "none"})`);
-  check(/caches\.delete\(key\)/.test(src) && /key\.startsWith\("qr-app-"\) && key !== APP_CACHE/.test(src), `the clean-up keeps the current cache and deletes only other qr-app- ones`);
+  const allowed = ["qr-app-", "qr-qf-fonts-", "qr-ext-", "qr-mushaf-"];
+  check(prefixes.length > 0 && prefixes.every((p) => allowed.includes(p)), `old-cache clean-up only touches qr- caches, never qr-quran (${prefixes.join(", ") || "none"})`);
+  check(/key\.startsWith\("qr-app-"\) && key !== APP_CACHE\) await caches\.delete\(key\)/.test(src), "the clean-up keeps the current app cache and deletes only other qr-app- ones");
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
