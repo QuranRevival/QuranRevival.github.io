@@ -13,6 +13,7 @@
 //   node tools/qr-verify/links-browser.mjs           (its own server, on PORT, default 8102)
 //   --mutate=inject   the worker does not add qr-links.js to the copied pages: the suite must FAIL
 //   --mutate=hide     the "hide" switch hides nothing: the suite must FAIL
+//   --mutate=away     the one-time note before leaving for MMSA never shows (J02 S1e): the suite must FAIL
 process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
 import fs from "node:fs";
 import path from "node:path";
@@ -29,6 +30,7 @@ const overrides = new Map();
 const MUTATIONS = {
   inject: ["/app/sw.js", (t) => t.replace('if (req.mode !== "navigate" || !url.pathname.startsWith("/app/")) return false;', "return false;")],
   hide: ["/app/js/qr-links.js", (t) => t.replace('    a.setAttribute(HIDDEN, "");\n', "")],
+  away: ["/app/js/qr-links.js", (t) => t.replace('try { return localStorage.getItem(AWAY_NOTE_KEY) === "1"; } catch { return false; }', "return true;")],
 };
 const edits = (p) => overrides.get(p) ?? [];
 const addEdit = (p, fn) => overrides.set(p, [...edits(p), fn]);
@@ -89,6 +91,10 @@ try {
     try { await walk(m); } catch (err) { check(false, `${m}: stopped early: ${String(err.message).split("\n")[0]}`); }
     try { await notFound(m); } catch (err) { check(false, `${m}: 404 page stopped early: ${String(err.message).split("\n")[0]}`); }
   }
+  for (const width of [390, 1400]) for (const lang of ["en", "bn"]) {
+    mode = "mmsa";
+    try { await awayNote(width, lang); } catch (err) { check(false, `away note @${width} ${lang} stopped early: ${String(err.message).split("\n")[0]}`); }
+  }
 } finally {
   await browser.close();
   server.close();
@@ -109,7 +115,7 @@ async function walk(m) {
   page.on("pageerror", (e) => errors.push(`${page.url().replace(base, "")}: ${e.message}`));
   await page.goto(`${base}/app/quranrevival.html`, { waitUntil: "load" });
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 90000 });
-  let rewrote = 0, hid = 0, toOwnAsma = 0, broken = [], shownOther = [], emptyHolders = [];
+  let rewrote = 0, hid = 0, toOwnAsma = 0, broken = [], shownOther = [], emptyHolders = [], away = 0, awayBad = [];
   for (const p of PAGES) {
     await page.goto(base + p, { waitUntil: "load" });
     await page.waitForTimeout(2500);
@@ -117,7 +123,7 @@ async function walk(m) {
       const holders = [...document.querySelectorAll(".nav-cat-group, .nav-cat, .continue-strip")].filter((h) => !h.closest("[data-qr-hidden]"));
       return {
         controlled: !!navigator.serviceWorker.controller,
-        links: [...document.querySelectorAll("a[href]")].map((a) => ({ href: a.href, raw: a.getAttribute("href"), qrHidden: !!a.closest("[data-qr-hidden]"), mmsa: a.hasAttribute("data-qr-mmsa"), own: a.hasAttribute("data-qr-own") })),
+        links: [...document.querySelectorAll("a[href]")].map((a) => ({ href: a.href, raw: a.getAttribute("href"), qrHidden: !!a.closest("[data-qr-hidden]"), mmsa: a.hasAttribute("data-qr-mmsa"), own: a.hasAttribute("data-qr-own"), away: a.hasAttribute("data-qr-away"), mark: !!a.querySelector(".qr-away-mark"), title: a.title })),
         empty: holders.filter((h) => h.querySelector("a[href]") && ![...h.querySelectorAll("a[href], button, select, input")].some((c) => !c.closest("[data-qr-hidden]") && !c.closest("summary"))).length,
       };
     });
@@ -134,7 +140,8 @@ async function walk(m) {
         const s = await status(`${base}${u.pathname}`);
         if (s !== 200) broken.push(`${p} → ${u.pathname} (${s})`);
       } else if (u.origin === MMSA) {
-        if (m === "hide" && l.mmsa) shownOther.push(`${p} → ${u.pathname}`);
+        if (l.away) { away++; if (!l.mark || !/Madrasah app|মাদ্রাসা অ্যাপে/.test(l.title) || !/^\/app\/[a-z-]+\.html$/.test(u.pathname)) awayBad.push(`${p} → ${u.pathname}`); }
+        else if (m === "hide" && l.mmsa) shownOther.push(`${p} → ${u.pathname}`);
       } else {
         const k = u.origin; if (!others.has(k)) others.set(k, new Set()); others.get(k).add(p);
       }
@@ -147,6 +154,8 @@ async function walk(m) {
     check(hid > 0 && shownOther.length === 0, `hide: links to pages QR does not hold are hidden (${hid}), none left pointing away (${shownOther.length}${shownOther.length ? ": " + shownOther.slice(0, 6).join("; ") : ""})`);
     check(emptyHolders.length === 0, `hide: no menu group or Continue strip is left showing with nothing in it${emptyHolders.length ? ` (${emptyHolders.join("; ")})` : ""}`);
   }
+  // J02 S1e: Notes, Bookmarks, Records... live in MMSA: in either mode their links go to MMSA's address, marked ↗.
+  check(away > 0 && awayBad.length === 0, `${m}: links to the pages whose home is MMSA (Notes, Bookmarks, About...) go to MMSA's address with ↗ and the sign-in words (${away} links${awayBad.length ? "; not marked: " + awayBad.slice(0, 4).join("; ") : ""})`);
   check(toOwnAsma > 0, `${m}: the menu's "Asma ul Husna" opens QR's own Asma app (${toOwnAsma} links)`);
   // The Modules menu, as the reader sees it on Quran Study.
   await page.goto(`${base}/app/quranrevival.html`, { waitUntil: "load" });
@@ -194,5 +203,55 @@ async function notFound(m) {
   const note = await page.evaluate(() => ({ shown: !document.getElementById("qrNotHere").hidden, home: document.querySelector("#qrNotHere .home")?.getAttribute("href"), sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   check(note.shown && note.home === "/" && note.sw <= note.cw, `${m}: any other missing address: a calm note and the way home (${JSON.stringify(note)})`);
   check(errors.length === 0, `${m}: 404.html no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
+  await ctx.close();
+}
+
+/** J02 S1e: the calm one-time note before a reader first leaves for a page whose home is MMSA: on a tapped link (the menu's
+ *  "Manage bookmarks…") and on a page opened by script (404.html: "Make a poster" goes to notes.html). */
+async function awayNote(width, lang) {
+  const tag = `away note @${width} ${lang}`;
+  const ctx = await newContext(browser, { appLang: lang, viewport: { width, height: width < 600 ? 844 : 900 }, allowServiceWorker: true });
+  await ctx.route("**/archive.org/**", (r) => r.abort());
+  await ctx.route(`${MMSA}/**`, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>MMSA</title><p>The full Madrasah</p>" }));
+  await routeMmsaHadith(ctx);
+  await ctx.addInitScript(() => { try { localStorage.setItem("mm_disable_screensaver", "1"); } catch {} });
+  const page = await ctx.newPage();
+  page.setDefaultTimeout(20000);
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto(`${base}/app/quranrevival.html`, { waitUntil: "load" });
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 90000 });
+  await page.reload({ waitUntil: "load" });
+  await page.waitForSelector('a[data-qr-away][href$="/app/bookmarks.html"]', { state: "attached" });
+  await page.waitForTimeout(800);
+  const words = lang === "bn" ? /মাদ্রাসা অ্যাপে খুলবে/ : /This opens in the Madrasah app\. If it asks, sign in once with the same Google account; your notes are the same\./;
+  const note = async () => page.evaluate(() => {
+    const box = document.getElementById("qrAwayNote");
+    if (!box) return null;
+    const btns = [...box.querySelectorAll("button")].map((b) => { const r = b.getBoundingClientRect(); return { t: b.textContent.trim(), h: r.height, w: r.width, in: r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight }; });
+    return { text: box.textContent.trim(), btns, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth };
+  });
+  await page.evaluate(() => document.querySelector('a[data-qr-away][href$="/app/bookmarks.html"]').click());
+  await page.waitForSelector("#qrAwayNote");
+  const n1 = await note();
+  const want = lang === "bn" ? ["বাতিল", "চালিয়ে যান"] : ["Cancel", "Continue"];
+  check(!!n1 && words.test(n1.text) && JSON.stringify(n1.btns.map((b) => b.t)) === JSON.stringify(want), `${tag}: tapping "Manage bookmarks…" first shows the note, in the reader's language (${n1?.btns.map((b) => b.t).join(" / ")})`);
+  check(n1 && n1.btns.every((b) => b.h >= 40 && b.in) && n1.sw <= n1.cw, `${tag}: its buttons are 40px or taller and on screen (${n1?.btns.map((b) => Math.round(b.h)).join(", ")}), no sideways scroll`);
+  if (process.env.SHOTS && width === 390) await page.screenshot({ path: `${process.env.SHOTS}/away-note-390-${lang}.png` });
+  await page.click("#qrAwayNote .qan-stay");
+  check(page.url().startsWith(`${base}/app/quranrevival.html`) && !(await note()), `${tag}: Cancel stays on Quran Study`);
+  await page.evaluate(() => document.querySelector('a[data-qr-away][href$="/app/bookmarks.html"]').click());
+  await page.waitForURL(`${MMSA}/**`);
+  check(page.url() === `${MMSA}/app/bookmarks.html`, `${tag}: the second time there is no note; it opens MMSA's page (${page.url()})`);
+  // By script, in a browser that has not seen the note yet: 404.html shows it, then Continue goes on.
+  await page.goto(`${base}/`, { waitUntil: "load" });
+  await page.evaluate(() => localStorage.removeItem("qr_mmsa_away_note_seen"));
+  await page.goto(`${base}/app/notes.html?unit=ayah%3A1%3A1&back=1`, { waitUntil: "load" });
+  await page.waitForSelector("#qrAwayNote");
+  check(words.test((await note())?.text ?? ""), `${tag}: a Notes page opened by script shows the same note first`);
+  await page.click("#qrAwayNote .qan-go");
+  await page.waitForURL(`${MMSA}/**`);
+  check(page.url() === `${MMSA}/app/notes.html?unit=ayah%3A1%3A1&back=1`, `${tag}: Continue opens it in MMSA, address kept (${page.url()})`);
+  check(errors.length === 0, `${tag}: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
   await ctx.close();
 }

@@ -214,7 +214,7 @@ async function upgrade(width, route) {
     check(c1["qr-quran-v1"] === 51, `${tag} qr-quran-v1 still holds the 51 surah files (${c1["qr-quran-v1"]})`);
     const refetched = hits.slice(from).filter((h) => h.p.startsWith("/tools/quran-data-pull/output/surahs/")).length;
     check(refetched === 0, `${tag} no surah file was downloaded again (${refetched})`);
-    check(!("qr-app-00.03" in c1) && (c1[`qr-app-${NEW_V}`] ?? 0) > 200, `${tag} qr-app-00.03 deleted, qr-app-${NEW_V} in use (${Object.keys(c1).join(", ")})`);
+    check(!("qr-app-00.03" in c1) && (c1[`qr-app-${NEW_V}`] ?? 0) >= 190, `${tag} qr-app-00.03 deleted, qr-app-${NEW_V} in use (${Object.entries(c1).map(([k, n]) => `${k} ${n}`).join(", ")}; J02 S1e: the install list is 198 files)`);
 
     // ---- Offline after the upgrade. ----
     if (route !== "asma") { check(errors.length === 0, `${tag} no page errors${errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""}`); await ctx.close(); return; }

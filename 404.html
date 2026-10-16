@@ -36,9 +36,16 @@ a { color: var(--accent); }
   <p class="quiet"><span data-t="full">The full Madrasah:</span> <a href="https://madrasatul-muslimeen.github.io/">madrasatul-muslimeen.github.io</a></p>
 </main>
 <script type="module">
-  import { QR_OTHER_SUBJECTS, notInQr, mmsaUrl, sameInQr } from "/app/js/qr-links.js";
+  import { QR_OTHER_SUBJECTS, notInQr, mmsaUrl, sameInQr, mmsaHome, awayNoteSeen } from "/app/js/qr-links.js";
   const own = sameInQr(location.href);
-  if (own || (QR_OTHER_SUBJECTS === "mmsa" && notInQr(location.href))) {
+  if (mmsaHome(location.href)) {
+    // J02 S1e: a page whose home is MMSA (Notes and the others), opened by script: the one-time note first.
+    document.getElementById("qrNotHere").hidden = true;
+    const go = awayNoteSeen() || await (await import("/app/js/qr-away-note.js")).showAwayNote();
+    if (go) location.replace(mmsaUrl(location.href));
+    else if (history.length > 1) history.back();
+    else location.replace("/");
+  } else if (own || (QR_OTHER_SUBJECTS === "mmsa" && notInQr(location.href))) {
     document.getElementById("qrNotHere").hidden = true;
     location.replace(own ?? mmsaUrl(location.href));
   } else {

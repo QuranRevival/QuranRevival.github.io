@@ -144,7 +144,10 @@ async function run(width) {
   await page.goto(`${base}/app/quranrevival.html`, { waitUntil: "load" });
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 60000 });
   const c1 = await cacheReport(page);
-  check((c1[`qr-app-${V1}`] ?? 0) >= 200, `${tag} the worker saved the pages and their code at install (${c1[`qr-app-${V1}`]} files in qr-app-${V1})`);
+  // J02 S1e: everything the worker saves at install (Asma's list + the shell), counted from app/sw.js itself.
+  const swAll = fs.readFileSync("app/sw.js", "utf8");
+  const INSTALL_FILES = ["const PRECACHE = [", "const SHELL = ["].reduce((n, k) => n + [...swAll.slice(swAll.indexOf(k), swAll.indexOf("];", swAll.indexOf(k))).matchAll(/^  "[^"]+",?$/gm)].length, 0);
+  check((c1[`qr-app-${V1}`] ?? 0) >= INSTALL_FILES, `${tag} the worker saved the pages and their code at install (${c1[`qr-app-${V1}`]} files in qr-app-${V1})`);
   // Every file of the shell (as on disk) was saved at install, before anything was opened.
   const swText = fs.readFileSync("app/sw.js", "utf8");
   const shellBlock = swText.slice(swText.indexOf("const SHELL = ["), swText.indexOf("];", swText.indexOf("const SHELL = [")));

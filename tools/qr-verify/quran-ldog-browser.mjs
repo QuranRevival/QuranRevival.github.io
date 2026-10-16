@@ -18,7 +18,7 @@ if (!process.env.QR_BASE) {
 const { chromium, newContext, openPage } = await import("../i18n-verify/harness.mjs");
 
 // QR J02 S1b: the pages Quran Study itself opens, copied unchanged.
-const S1B = ["notes.html", "bookmarks.html", "journey-map.html", "records.html", "monitor.html", "about.html", "onboarding.html", "import-notes.html", "accept-invite.html"];
+const S1B = ["journey-map.html"]; // J02 S1e: the other S1b pages live in MMSA now (PCA J71)
 let pass = 0, fail = 0;
 const check = (ok, what) => {
   if (ok instanceof Promise) throw new Error(`check() was handed a promise: ${what}`);

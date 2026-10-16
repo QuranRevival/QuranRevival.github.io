@@ -9,7 +9,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 // J02 S4: index.html is QR's front page (the same file as the site's own /index.html).
-export const PAGES = ["index.html", "quranrevival.html", "ldog-study.html", "notes.html", "bookmarks.html", "journey-map.html", "records.html", "monitor.html", "about.html", "onboarding.html", "import-notes.html", "accept-invite.html"];
+// J02 S1e: the S1b pages but Mapping My Journey (journey-map.html, embedded by Quran Study's Notes pane) live in MMSA now.
+export const PAGES = ["index.html", "quranrevival.html", "ldog-study.html", "journey-map.html"];
 const re = /(?:(?:import|export)\s[^'"]*?from\s*|import\s*\(\s*|import\s+)["'](\.{1,2}\/[^"']+\.js)["']/g;
 
 export function shellList() {
