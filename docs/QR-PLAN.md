@@ -151,6 +151,8 @@ the signed-in QR (QR J02).
 - `node tools/qr-verify/asma-store-browser.mjs`: manifest, icons, screenshots, installability (full Chromium), the About
   page at 390/1400, EN/BN, and offline. `--mutate=maskable|noicon|browser|aboutoffline` must fail.
 - `node tools/qr-asma/make-screensaver.mjs <MMSA checkout> --check`: the QR screensaver is MMSA's plus the 8 edits.
+- `node tools/qr-verify/mmsa-drift.mjs <MMSA checkout at 077b4db>`: every file QR shares with MMSA is identical or in
+  the "Deliberate changes from the copy point" table (with its sha256). Run it after every copy or change.
 - `node tools/qr-verify/asma-local-sync.mjs <MMSA checkout>`: `app/js/asma-local.js` still matches MMSA, function by function.
 
 ## Deliberate changes from the copy point
