@@ -77,7 +77,9 @@ export const ASMA_POSTERS = [
   { label: 'Al-Khallaq', url: 'https://archive.org/download/NamesAndAttributesOfAllah/%28Khallaq%29%20Al-Khallaq.jpg' },
   { label: 'Al-Lateef', url: 'https://archive.org/download/NamesAndAttributesOfAllah/%28Lateef%29%20Al-Lateef.jpg' },
   { label: 'Al-Maaleek', url: 'https://archive.org/download/NamesAndAttributesOfAllah/%28Maaleek%29%20Al-Maaleek.jpg' },
-  { label: 'Al-Maalik', url: 'https://archive.org/download/NamesAndAttributesOfAllah/%28Maalik%29%20Al-Maalik.jpg' },
+  // QR J01 R5: this archive file is named "(Maalik) Al-Maalik", but the poster is Al-Malik's (#3, المَلِك, "The King &
+  // Owner of Dominion"; checked on the image, 16 Oct 2026, as MMSA found). Captioned for what it shows; 112 Al-Maalik has none.
+  { label: 'Al-Malik', url: 'https://archive.org/download/NamesAndAttributesOfAllah/%28Maalik%29%20Al-Maalik.jpg' },
   { label: 'Al-Mannan', url: 'https://archive.org/download/NamesAndAttributesOfAllah/%28Mannan%29%20Al-Mannan.jpg' },
   { label: 'Al-Mateen', url: 'https://archive.org/download/NamesAndAttributesOfAllah/%28Mateen%29%20Al-Mateen.jpg' },
   { label: 'Al-Mu\'mim', url: 'https://archive.org/download/NamesAndAttributesOfAllah/%28Mu%27mim%29%20Al-Mu%27mim.jpg' },

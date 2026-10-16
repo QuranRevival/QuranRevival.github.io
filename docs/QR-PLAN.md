@@ -88,6 +88,12 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
 
 Every change to a file the worker saves bumps `APP_VERSION` in `app/js/qr-version.js` (standing rule, QR Architect).
 00.01 = R2 (offline); 00.02 = R3 (screensaver); 00.03 = R4 (About and privacy page, manifest screenshots).
+00.04 = R5b (Asma-only follow-up from 76d3736): the poster data's fixes from QR J01 R5 (MMSA 7861b96's 112 guard,
+the 13 spelling and grammar fixes, Al-Malik's photo caption) and 132's meaning line "The Grand Name" (the owner's Q8,
+default A; `MEANING_132` in `tools/asma-poster/build-poster-data.mjs`, one line for B "{The Grand Name}" or C "The
+Proper Name"). The R2 classic worker and its `?v=` scheme are unchanged, so a phone on 00.03 updates the usual way.
+Checks: `tools/qr-verify/asma-poster-data-check.mjs` (generated; no shared description; 112 its own word; 132's
+line; no two Names share a poster Arabic unless the Name list does; `--mutate=dup112` must fail).
 
 ## Never changes (shared with MMSA)
 
