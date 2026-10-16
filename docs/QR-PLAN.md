@@ -62,19 +62,16 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
   turns waiting, each page showing an "update" the other undid. `app/sw.js` now refuses to install when started
   without `?v=` (only MMSA's register does that), so these pages install no worker in S1 and Asma's stays as it is.
   `tools/qr-verify/one-worker-browser.mjs` proves it in both orders of visits. The worker for all of QR is S3.
-- **Not here yet; on QR these links 404 until the QR Architect decides (link to MMSA, or copy later):**
-  - the menu (`nav.js`): `deen-study`, `arabic-study`, `hadith-study`, `general-study`, `naturelife-study`,
-    `life-skill`, `health-study`, `asma-study`, `classes`, `curriculum`, `course-offers`, `homework`, `records`,
-    `monitor`, `people`, `catalogue`, `bookmarks` (Manage bookmarks…), `taglines`, `backup`, `about`,
-    `journey-map` (Mapping My Journey), `dawah`; `onboarding` (the no-account message); the continue strip
-    (`continue-strip.js`) opens the study pages above;
-  - Quran Study itself: `journey-map.html#folders` (filing a note), `notes.html?unit=…&dawah=1` (Dawah share),
-    `records.html`, `bookmarks.html`; the Āyah card's related hadith and Explore → Asma's cited hadith open
-    `hadith-collections.html` (`ayah-hadith.js`, `asma-poster.js`).
-  - **Data not copied:** the Āyah card's related-hadith rows read `tools/hadith-data-pull/output/openiti-release/split/
-    <book>/index.json` for the book titles (3 files 404; the rows then show the raw book id); Explore → Asma's cited
-    hadith read openiti-release, concordance and translations. Copying only the books' `index.json` files would give
-    the titles back.
+- **S1b added** the pages Quran Study opens: `notes`, `bookmarks`, `journey-map`, `records`, `monitor`, `about`,
+  `onboarding`, `import-notes`, `accept-invite` (none registers a worker: `one-worker-browser.mjs` visits them all).
+- **Still 404 on QR after S1b (the QR Architect decides: link to MMSA, or copy later):**
+  - the menu (`nav.js`): the other study modules `deen-study`, `arabic-study`, `hadith-study`, `general-study`,
+    `naturelife-study`, `life-skill`, `health-study`, `asma-study`; the teaching pages `classes`, `curriculum`,
+    `course-offers`, `homework`, `people`, `catalogue`; `taglines`, `backup`, `dawah`; the continue strip opens the
+    study modules; `index.html` (MMSA's app landing, linked from some pages' headers);
+  - the Hadith library `hadith-collections.html` (the Āyah card's related hadith and Explore → Asma's cited hadith).
+  - **Data not copied:** the hadith chapter files `openiti-release/split/<book>/ch-*.json` (the Āyah card asks for
+    them after the book index), concordance, translations, hadeethenc, dua.
 - **Tests:** `tools/qr-verify/quran-ldog-browser.mjs` (MMSA's harness, Firebase faked at the network layer);
   `one-worker-browser.mjs`. MMSA's own suites, run against QR on 16 Oct (the results are in the QR J02 S1 report):
   green where they only need these pages and the data copied; the failures are the pages and hadith data not here.
@@ -156,9 +153,21 @@ the signed-in QR (QR J02).
 - `node tools/qr-asma/make-screensaver.mjs <MMSA checkout> --check`: the QR screensaver is MMSA's plus the 8 edits.
 - `node tools/qr-verify/asma-local-sync.mjs <MMSA checkout>`: `app/js/asma-local.js` still matches MMSA, function by function.
 
+## Deliberate changes from the copy point
+
+Every file QR copied from MMSA is byte-identical to MMSA `077b4db`, except the files below. `node tools/qr-verify/mmsa-drift.mjs <MMSA 077b4db checkout>`
+(run by hand, like `asma-local-sync.mjs`) fails if any file under `app/` or `tools/` that MMSA also has differs from
+`077b4db` without a row here, or if a listed file's sha256 no longer matches its row (so a later edit must be recorded too).
+
+| File | Change | Source | Job | sha256 (first 16) |
+|---|---|---|---|---|
+| `app/quranrevival.html` | Only the 4-line `#wbwPanel` hunk after line 3573 (it scrolls itself, so "Study this Surah" is never under the dock at 390). MMSA's other change since (a "Legacy App - v10" link) is NOT taken. | MMSA `fb7c01d` (v11.07, PR #889) | QR J02 S1b | `8292a70c8839cb74` |
+| `app/sw.js` | QR's own worker (Asma, R2), not MMSA's; it refuses a start without `?v=` (J02 S1). | QR's own | QR J01 R2, J02 S1 | `23050d7405372423` |
+
 ## Copy log (every copy from MMSA, newest first)
 
 | When (Sydney) | MMSA commit | What was copied | QR job |
 |---|---|---|---|
+| 16 Oct 2026, 11:19 am | `077b4db` | **QR J02 S1b, 53 files, 2.78 MB, all byte-identical:** the 9 pages Quran Study opens (`notes`, `bookmarks`, `journey-map`, `records`, `monitor`, `about`, `onboarding`, `import-notes`, `accept-invite`; 0.52 MB); the 26 scripts they reach that QR did not have (0.46 MB; 91 reached in all); `css/note-window.css`; `vendor/purify.min.js` + README; the 15 hadith-library book indexes `tools/hadith-data-pull/output/openiti-release/split/<book>/index.json` (1.73 MB, under the 3 MB limit; no chapter text). Every earlier copy re-checked with cmp: identical (`app/sw.js` is QR's own). | QR J02 S1b |
 | 16 Oct 2026, 9:59 am | `077b4db` | **QR J02 S1, 671 files, 42.2 MB new, all byte-identical:** `app/quranrevival.html` and `app/ldog-study.html` (1.6 MB); 116 scripts in `app/js/` (1.6 MB; with the 24 already in QR, unchanged, that is all 140 the two pages reach: the handover's walk missed `assign-picker.js`, reached only through an `export ... from`, so `tools/qr-verify/import-walk.mjs` now follows those too); `css/shell.css`, `card-look.css`, `admin-touch.css`; `fonts/` (3 woff2 + README); `img/wheel-hub-calligraphy.webp`; the rest of `tools/quran-data-pull/output/` (415 files, 37.7 MB, making all 57.1 MB); `tools/hadith-data-pull/output/ayah-hadith/` (130 files, 1.1 MB). Also MMSA's test harness `tools/i18n-verify/harness.mjs`, `firebase-stub.mjs`, `vendor/purify.min.js` (73 KB). NOT copied: hadith translations, openiti-release, concordance, hadeethenc, dua. Not for release: these pages need the owner's Firebase authorised-domain step. | QR J02 S1 |
 | 16 Oct 2026, 8:37 am | `077b4db` | **74 files, 20.3 MB, all byte-identical:** 22 scripts in `app/js/` (0.74 MB: `asma-renderer`, `asma-poster`, `asma-poster-data`, `asma-ref-parser`, `asma-descriptions`, `asma-cited-ayat`, `asma-cited-hadith`, `asma-collections-data`, `asma-data`, `mastery-wheel`, `unit-keys`, `labels`, `lang`, `prefs`, `i18n`, `i18n/bn`, `i18n/surah-names-bn`, `i18n/asma-names-bn`, `quran-data`, `quran-word-identity`, `openiti-corpus`, `hadith-translations`); `app/img/asma-poster-frame.webp` (0.2 MB); the 51 surah files the Names cite, `tools/quran-data-pull/output/surahs/` (19.4 MB). **Derived, not copied as files:** `app/js/asma-local.js` (12 pure functions of `asma-collections.js`, byte-identical, checked by `tools/qr-verify/asma-local-sync.mjs`); `tools/hadith-data-pull/output/asma-cited-hadith.json` (the 14 cited passages and their translations, 66 KB, written by `tools/qr-asma/extract-cited-hadith.mjs` from MMSA's 114 MB library). No copied file was changed. | QR J01 R1 |
