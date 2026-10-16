@@ -211,7 +211,7 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
 
 Every change to a file the worker saves bumps `APP_VERSION` in `app/js/qr-version.js` (standing rule, QR Architect).
 00.01 = R2 (offline); 00.02 = R3 (screensaver); 00.03 = R4 (About and privacy page, manifest screenshots);
-00.04 = J02 S3 (one worker); 00.05 = J02 S3b (upgrade path); 00.06 = J02 S4 (front page, links); 00.07 = J02 S4b (two MMSA fixes: OpenITI credit, folder menu); 00.08 = J02 S4f (Read bar: MMSA v11.12, v11.13); 00.09 = J02 S4c (Explore Asma wheel fit); 00.10 = J02 S1d (Hadith read from MMSA); 00.11 = J02 S1e (the S1b pages live in MMSA); 00.12 = J01 R5 (Asma poster data: 112, typos); 00.13 = J03 (range bookmarks; Meaning switches on 📖's line). 00.14 = J05 (MMSA v11.18 to v11.20: Continue way back, Breakdown note in Bangla, Zab long names wrap); 00.15 = J04 (the Owner: the Word Progress percentages bigger).
+00.04 = J02 S3 (one worker); 00.05 = J02 S3b (upgrade path); 00.06 = J02 S4 (front page, links); 00.07 = J02 S4b (two MMSA fixes: OpenITI credit, folder menu); 00.08 = J02 S4f (Read bar: MMSA v11.12, v11.13); 00.09 = J02 S4c (Explore Asma wheel fit); 00.10 = J02 S1d (Hadith read from MMSA); 00.11 = J02 S1e (the S1b pages live in MMSA); 00.12 = J01 R5 (Asma poster data: 112, typos); 00.13 = J03 (range bookmarks; Meaning switches on 📖's line). 00.14 = J05 (MMSA v11.18 to v11.20: Continue way back, Breakdown note in Bangla, Zab long names wrap); 00.15 = J04 (the Owner: the Word Progress percentages bigger); 00.16 = J06 (MMSA v11.21: note sheet titles wrap, 40px Bookmark buttons, Zab toast's Open 40px).
 
 ## Never changes (shared with MMSA)
 
@@ -285,17 +285,18 @@ the signed-in QR (QR J02).
 
 ## Pinned files (owner MMSA)
 
-QR J02 S1e (PCA J71, one home for every app part): Notes, Mapping My Journey, Zab and Bookmarks are MMSA's. The files below are the parts of them Quran Study still needs in-page (the Notes pane, the folder tray, the Zab bar, the bookmark popover). Each is byte-identical to MMSA, at the copy point unless its line names a commit; `mmsa-drift.mjs` fails if one differs, even with a sha in the changes table (a pinned file is never a deliberate change). A fix to one comes from MMSA's own commit, byte for byte. QR J05 adds two shared study-page parts MMSA keeps changing, taken whole at MMSA `1c7356b` (v11.20): `continue-strip.js` (the Continue chips carry back=1) and `way-modal.js` (the Breakdown note in Bangla).
+QR J02 S1e (PCA J71, one home for every app part): Notes, Mapping My Journey, Zab and Bookmarks are MMSA's. The files below are the parts of them Quran Study still needs in-page (the Notes pane, the folder tray, the Zab bar, the bookmark popover). Each is byte-identical to MMSA, at the copy point unless its line names a commit; `mmsa-drift.mjs` fails if one differs, even with a sha in the changes table (a pinned file is never a deliberate change). A fix to one comes from MMSA's own commit, byte for byte. QR J05 adds two shared study-page parts MMSA keeps changing, taken whole at MMSA `1c7356b` (v11.20): `continue-strip.js` (the Continue chips carry back=1) and `way-modal.js` (the Breakdown note in Bangla). QR J06 adds `css/shell.css`, the shared page style, taken whole at MMSA `70e00a3` (v11.21: the Bookmark menu's folder buttons 40px).
 
 - `app/journey-map.html` (MMSA `1c7356b`)
-- `app/css/note-window.css`
+- `app/css/note-window.css` (MMSA `70e00a3`)
+- `app/css/shell.css` (MMSA `70e00a3`)
 - `app/js/ayah-folder-filing-plan.js`
 - `app/js/ayah-folder-filing-renderer.js`
 - `app/js/ayah-note-renderer.js`
 - `app/js/ayah-notes.js`
 - `app/js/bookmark-assign.js`
 - `app/js/bookmark-nav.js` (MMSA `1c7356b`)
-- `app/js/bookmark-popover.js` (MMSA `ca8d942`)
+- `app/js/bookmark-popover.js` (MMSA `70e00a3`)
 - `app/js/continue-strip.js` (MMSA `1c7356b`)
 - `app/js/bookmarks.js` (MMSA `1c7356b`)
 - `app/js/float-window.js`
@@ -320,7 +321,7 @@ QR J02 S1e (PCA J71, one home for every app part): Notes, Mapping My Journey, Za
 - `app/js/study-note-service.js`
 - `app/js/writing-popout.js`
 - `app/js/writing-sheet.js`
-- `app/js/zab-bar.js` (MMSA `1c7356b`)
+- `app/js/zab-bar.js` (MMSA `70e00a3`)
 - `app/js/zab-data.js`
 - `app/js/zab-readiness.js`
 - `app/js/zab-to-note.js`
@@ -346,13 +347,14 @@ Every file QR copied from MMSA is byte-identical to MMSA `077b4db`, except the f
 | `app/js/asma-posters.js` | One caption: the archive photo "(Maalik) Al-Maalik.jpg" shows Al-Malik (#3), so it is captioned "Al-Malik"; 112 Al-Maalik has no photo. | QR J01 R5 (MMSA's finding, checked on the image) | QR J01 R5 | `a17dc0f6ebf2ac51` |
 | `app/index.html` | QR's own front page (the same file as the site's `/index.html`), not MMSA's one-line redirect to `quranrevival.html`. | QR's own | QR J02 S4 | `0e39b69471068de1` |
 | `app/quranrevival.html` | Six changes only. (1) The 4-line `#wbwPanel` hunk after line 3573 (it scrolls itself, so "Study this Surah" is never under the dock at 390). (2) J02 S4f: the Read bar CSS hunk after the `.ayah-card-back-pill.back-docked` rules (two `@media` blocks, max-width 420px and 340px: the way back shares a line on a small phone), byte for byte. (3) J02 S4f: in the `min-width: 900px` query, `#readToolsBtn { display: none; }` becomes `#readBar #readToolsBtn { display: none; }` with MMSA's comment (a dead ⋯ showed from 900px: `#readBar .qr-ico` beat the bare rule). (4) QR J03: the Read view's bookmark dialog offers a Range (MMSA's popover range kind): `readBookmarkUnitChoices()` adds it, the `units` mapping passes its fields, the save uses its range:S:A-B key with MMSA's Range settings, and `applyQuranBookmarkSettings()` opens a position-only range bookmark at its first āyah. (5) QR J03: `#readMeaningLayersSlot label { margin: 0; }` (a page-wide 8px label margin put the Meaning switches 4px below 📖). (6) QR J04 (the Owner, 17 Oct): the Word Progress percentage circles 60px with the number at 0.82rem (50px and 0.7rem on a phone; were 38px and 0.6rem). MMSA's other changes since (a "Legacy App - v10" link) are NOT taken. | (1) MMSA `fb7c01d` (v11.07, PR #889); (2) MMSA `391d21b` (v11.12, PR #892); (3) MMSA `ac3b917` (v11.13, PR #895); (4), (5) QR J03; (6) QR J04 | QR J02 S1b, J02 S4f, QR J03, QR J04 | `469d90492898dbb5` |
-| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names; J02 S4: adds `js/qr-copied-page.js` (S4c; it starts `qr-links.js`) to each copied page as it serves it. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b, J02 S4, J02 S4c, J02 S1d | `d73ebe1e2725c7af` |
+| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names; J02 S4: adds `js/qr-copied-page.js` (S4c; it starts `qr-links.js`) to each copied page as it serves it. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b, J02 S4, J02 S4c, J02 S1d | `5b854213bda4c62a` |
 | `app/js/routine-study.js` | LDOG's way back: imports MMSA's `mountContinueBack` and calls it after the Bookmark menu, so a Continue chip (back=1) gives ← Back (the way-back law; LDOG's home is QR, PCA J71). | QR's own (MMSA v11.18 note, PR #908) | QR J05 | `ae3c358536ce3502` |
 
 ## Copy log (every copy from MMSA, newest first)
 
 | When (Sydney) | MMSA commit | What was copied | QR job |
 |---|---|---|---|
+| 17 Oct 2026, 7:56 am | `70e00a3` | **QR J06:** pinned files taken whole at MMSA `70e00a3` (v11.21, PR #916): `css/note-window.css` (a long note title wraps on a phone sheet), `js/bookmark-popover.js` (fields and buttons 40px, the dialog scrolls inside itself), `js/zab-bar.js` (the toast's Open 40px), and newly pinned `css/shell.css` (the Bookmark menu's folder buttons 40px). The same commit carries QR J04's percentage lines into MMSA's `quranrevival.html`, byte for byte. | QR J06 |
 | 17 Oct 2026, 7:16 am | `1c7356b` | **QR J05** (built on branch `qr/j04-mmsa-1120`; the Owner's J04 came first, so it is filed as J05): pinned files taken whole at MMSA `1c7356b` (v11.20): `bookmark-nav.js`, `bookmarks.js` (v11.18, PR #908: `mountContinueBack()`, hidden modules filtered before the five-place cap), `zab-bar.js`, `journey-map.html` (v11.20, PR #914: long names wrap, 40px tree arrow), and newly pinned `continue-strip.js` (v11.18: chips carry back=1) and `way-modal.js` (v11.19, PR #911: Breakdown note through `t()`/`num()`); the 2 Bangla lines of PR #911 in `bn.js`. QR's own: LDOG calls `mountContinueBack()`. | QR J05 |
 | 16 Oct 2026, 5:52 pm | `ca8d942` | **QR J03:** `app/js/bookmark-popover.js` whole (pinned, owner MMSA; v11.14, PR #898, the dialog's āyah range) and the 4 Bangla lines after "Bookmark this" in `app/js/i18n/bn.js`. | QR J03 |
 | 16 Oct 2026, 5:10 pm | `52f6db3` | **QR J02 S1e:** 23 files removed (the 8 S1b pages but Mapping My Journey, and the 15 scripts only they reach; their home is MMSA, PCA J71). `app/journey-map.html` taken whole from MMSA `52f6db3` and pinned (it was 077b4db plus that commit's padding hunk; now also its "Legacy App - v10" link). | QR J02 S1e |
