@@ -33,7 +33,9 @@ export async function registerQrServiceWorker({ onUpdateReady } = {}) {
     tell(reg.waiting);
     reg.addEventListener("updatefound", () => {
       const w = reg.installing;
-      w?.addEventListener("statechange", () => { if (w.state === "installed") tell(w); });
+      // J02 S3b: a worker of the SAME version started another way takes over by itself at once (see app/sw.js); only
+      // a worker still waiting a moment later is a real new version for the reader.
+      w?.addEventListener("statechange", () => { if (w.state === "installed") setTimeout(() => { if (reg.waiting === w) tell(w); }, 1500); });
     });
     return reg;
   } catch (err) {

@@ -26,7 +26,7 @@ const ROOT = process.cwd();
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8", ".webmanifest": "application/manifest+json", ".png": "image/png", ".webp": "image/webp", ".woff2": "font/woff2" };
 const overrides = new Map();
 const MUTATIONS = {
-  shell: ["/app/js/qr-precache.js", (t) => t.replace('  "ldog-study.html",\n', "")],
+  shell: ["/app/sw.js", (t) => t.replace('  "ldog-study.html",\n', "")],
   sdk: ["/app/sw.js", (t) => t.replace("if (isFirebaseSdk(req)) { event.respondWith(handleFirebaseSdk(req)); return; }", "")],
   carry: ["/app/sw.js", (t) => t.replace("await carryOverPreviousCache().catch(() => 0);", "")],
 };
@@ -142,7 +142,9 @@ async function run(width) {
   const c1 = await cacheReport(page);
   check((c1[`qr-app-${V1}`] ?? 0) >= 200, `${tag} the worker saved the pages and their code at install (${c1[`qr-app-${V1}`]} files in qr-app-${V1})`);
   // Every file of the shell (as on disk) was saved at install, before anything was opened.
-  const shell = [...fs.readFileSync("app/js/qr-precache.js", "utf8").matchAll(/^  "([^"]+)",?$/gm)].map((m) => m[1]);
+  const swText = fs.readFileSync("app/sw.js", "utf8");
+  const shellBlock = swText.slice(swText.indexOf("const SHELL = ["), swText.indexOf("];", swText.indexOf("const SHELL = [")));
+  const shell = [...shellBlock.matchAll(/^  "([^"]+)",?$/gm)].map((m) => m[1]);
   const notSaved = await page.evaluate(async ([name, files]) => {
     const c = await caches.open(name); const out = [];
     for (const f of files) if (!(await c.match(`${location.origin}/app/${f}`, { ignoreSearch: true }))) out.push(f);
