@@ -82,6 +82,13 @@ async function quran(width) {
   await page.waitForFunction(() => document.querySelector("[data-ayah-sheet] .ayah-sheet-ref"), null, { timeout: 10000 }).catch(() => {});
   const card = await page.evaluate(() => ({ open: document.getElementById("ayahActionSheetOverlay")?.classList.contains("open"), unit: document.querySelector("[data-ayah-sheet]")?.dataset.unitKey, badge: !!document.querySelector('[data-ayah-num-badge="36:38"]'), surah: document.getElementById("surahSelect")?.value, ayah: document.getElementById("ayahSelect")?.value, badges: document.querySelectorAll("[data-ayah-num-badge]").length }));
   check(card.open && card.unit === "ayah:36:38", `${tag} the Āyah card opens (${JSON.stringify(card)})`);
+  // S1c: its "Related hadith" rows name the book (36:38 is quoted by Bukhari and Muslim), never a raw library id.
+  await page.waitForFunction(() => document.querySelector("[data-ayah-hadith-open]") || document.querySelector("[data-ayah-hadith-none]"), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => [...document.querySelectorAll("[data-ayah-hadith-open]")].some((b) => /Bukhari|Muslim/.test(b.textContent)), null, { timeout: 15000 }).catch(() => {});
+  const rows = await page.evaluate(() => [...document.querySelectorAll("[data-ayah-hadith-open]")].map((b) => b.textContent.replace(/\s+/g, " ").trim()));
+  const rawId = rows.filter((t) => /\d{4}[A-Za-z]+\.[A-Za-z]+\.[A-Za-z0-9]+-ara\d/.test(t));
+  check(rows.length >= 3 && /Muslim 159\b/.test(rows.join("|")) && /Bukhari 3199/.test(rows.join("|")) && rawId.length === 0,
+    `${tag} the Āyah card's related hadith name their books (${rows.length} rows: "${rows[0] ?? ""}"${rawId.length ? `; raw ids: ${rawId.length}` : ""})`);
   const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   check(sw <= cw, `${tag} no sideways scroll (${sw} <= ${cw})`);
   check(pageErrors.length === 0, `${tag} no page errors${pageErrors.length ? ": " + pageErrors.join(" | ") : ""}`);
