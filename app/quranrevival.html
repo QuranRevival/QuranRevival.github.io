@@ -2651,6 +2651,7 @@
   #readBarBookmarkBtn { box-sizing: border-box; width: 40px; height: 40px; padding: 0; margin: 0; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; line-height: 1; }
   /* A switch is a pill: filled navy when on (the same look as 📖's pressed state), outlined when off. The checkbox stays
      in the label for keyboards and screen readers, drawn as nothing, so the three fit beside 📖 and ⤢ on a phone. */
+  #readMeaningLayersSlot label { margin: 0; } /* QR J03: a page-wide label margin (8px) put the switches 4px below 📖; with none, the bar centres them on its line */
   #readMeaningLayersSlot label { position: relative; display: inline-flex; align-items: center; height: 36px; box-sizing: border-box; padding: 0 0.6rem; border: 1.5px solid #1F3A6E; border-radius: 999px; background: #fff; color: #1F3A6E; font-size: 0.8rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
   /* Issue #794: with a wide fallback sans-serif (the Builder's runner's) the three pills plus 🔖 📖 ⤢ need ~384px and the
      bar wrapped to two rows (91px) at 390/400. Tighter pills below 440px keep it one row with room to spare. */
@@ -21143,6 +21144,12 @@
 
     /** The other half of captureQuranBookmarkSettings() -- restores every field it captured, then lands on the bookmarked āyah's own Note screen (item 6: "open the same place where the bookmark was created from"). Silently tolerant of a settings object from before this round (null, or missing fields) -- every field is optional and simply left alone. */
     async function applyQuranBookmarkSettings(settings, position) {
+      // QR J03: a range bookmark saved with only its position (range:S:A-B, no settings) opens at its first āyah, as a Range.
+      const rangeKey = typeof position === "string" ? position.match(/^range:(\d+):(\d+)-(\d+)$/) : null;
+      if (rangeKey && typeof settings?.surahNum !== "number") {
+        const [surahNum, from, to] = rangeKey.slice(1).map(Number);
+        settings = { ...(settings ?? {}), surahNum, ayahNum: from, unitType: "range", rangeFrom: from, rangeTo: to, view: settings?.view ?? "read" };
+      }
       if (settings) {
         if (typeof settings.surahNum === "number" && settings.surahNum !== currentSurahNum && surahIndex.some((s) => s.surahNumber === settings.surahNum)) {
           currentSurahNum = settings.surahNum;
@@ -21620,6 +21627,17 @@
           settings: { ...base, unitType: "page", ayahNum: ayah, rangeFrom: null, rangeTo: null },
         });
       }
+      // QR J03 (the Owner): a range of āyāt, through MMSA's popover range kind (v11.14). It starts at the āyah on
+      // screen and runs to the end of its ruku' (in a Range unit, the unit's own range); the reader can change both.
+      const ayahs = currentSurahData.ayahs;
+      const rukuOf = ayahs.find((a) => a.ayah === ayah)?.ruku;
+      const rukuEnd = Math.max(ayah, ...ayahs.filter((a) => a.ruku === rukuOf).map((a) => a.ayah));
+      const [from, to] = info.unitType === "range" ? currentUnitAyahBounds() : [ayah, rukuEnd];
+      const meta = surahIndex.find((x) => x.surahNumber === currentSurahNum);
+      choices.push({
+        id: "range", label: t("Range"), kind: "range", surah: currentSurahNum, ayahCount: currentSurahData.ayahCount,
+        from, to, surahName: surahName(currentSurahNum, meta?.nameEnglish), settings: base,
+      });
       return choices;
     }
 
@@ -21672,10 +21690,18 @@
         roster: assignableRoster(),
         selectedPersonId,
         // The Owner, 12 Oct 2026 -- "quick unit choice" (Read view only; empty everywhere else).
-        units: unitChoices.map(({ id, label, defaultName: dn }) => ({ id, label, defaultName: dn })),
+        units: unitChoices.map(({ id, label, defaultName: dn, kind, surah, ayahCount, from, to, surahName: sn }) => (kind === "range"
+          ? { id, label, kind, surah, ayahCount, from, to, surahName: sn } // QR J03: MMSA's popover range kind (v11.14)
+          : { id, label, defaultName: dn })),
       });
       if (!choice) return false; // cancelled -- no write, no re-render
-      const picked = unitChoices.find((u) => u.id === choice.unitId) ?? null;
+      let picked = unitChoices.find((u) => u.id === choice.unitId) ?? null;
+      // QR J03: a range saves under its own key (range:S:A-B) WITH the settings MMSA's Bookmarks page Range form writes,
+      // so MMSA opens it too.
+      if (picked?.kind === "range" && choice.range && choice.unitKey) {
+        const { surah, from, to } = choice.range;
+        picked = { ...picked, position: choice.unitKey, settings: { ...picked.settings, unitType: "range", surahNum: surah, ayahNum: from, rangeFrom: from, rangeTo: to } };
+      }
       // Save the SAME bookmark into every ticked assignee's own document, one
       // write per person on their own bookmarks/{tenantId}__{personId}
       // document -- bookmark-assign.js, shared with Asma, Deen Study and the
