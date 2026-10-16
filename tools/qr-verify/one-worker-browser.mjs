@@ -7,7 +7,10 @@
 // cache, no "Updated" notice on the MMSA pages, no "new version" note on Asma.
 //
 //   node tools/qr-verify/one-worker-browser.mjs        (serves itself on PORT, default 8098)
-//   --mutate=guard   serves app/sw.js without its refusal; the suite must FAIL
+//   --mutate=split   serves QR's register asking for "./sw.js?v=…" as a classic worker again (R2's way); must FAIL
+//
+// J02 S3: the rule is now ONE worker for all pages: QR's register and MMSA's unchanged sw-register.js both ask for
+// "/app/sw.js" as a module, so whichever page comes first installs it and every page shares it.
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -24,7 +27,7 @@ const server = http.createServer((req, res) => {
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404); res.end(); return; }
     let body = data;
-    if (MUTATE === "guard" && p === "/app/sw.js") body = data.toString("utf8").replace('const STARTED_BY_QR = new URL(self.location.href).searchParams.has("v");', "const STARTED_BY_QR = true;");
+    if (MUTATE === "split" && p === "/app/js/qr-sw-register.js") body = data.toString("utf8").replace('register("/app/sw.js", { type: "module" })', 'register("./sw.js?v=split", { scope: "./" })');
     res.writeHead(200, { "Content-Type": MIME[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-cache" });
     res.end(body);
   });
@@ -62,10 +65,9 @@ async function visit(order) {
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  let asmaSeen = false;
   for (const p of order) {
     await page.goto(`${base}/app/${p}`, { waitUntil: "load" });
-    if (p === "asma.html") { asmaSeen = true; await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30000 }); }
+    await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30000 }).catch(() => {});
     await page.waitForTimeout(2500); // MMSA's sw-register registers after "load", then the worker installs (or refuses)
     const s = await page.evaluate(async () => {
       const regs = await navigator.serviceWorker.getRegistrations();
@@ -77,12 +79,8 @@ async function visit(order) {
       };
     });
     const tag = `${order.join(" → ")}: after ${p}`;
-    if (!asmaSeen) {
-      check(s.regs.length === 0, `${tag}, no worker is installed by an MMSA page (${JSON.stringify(s.regs)})`);
-    } else {
-      check(s.regs.length === 1, `${tag}, exactly one registration (${s.regs.length})`);
-      check(/\/app\/sw\.js\?v=/.test(s.regs[0]?.active ?? "") && !s.regs[0]?.waiting && !s.regs[0]?.installing, `${tag}, QR's worker is active and nothing waits (${JSON.stringify(s.regs[0])})`);
-    }
+    check(s.regs.length === 1, `${tag}, exactly one registration (${s.regs.length})`);
+    check(s.regs[0]?.active === `${base}/app/sw.js` && !s.regs[0]?.waiting && !s.regs[0]?.installing, `${tag}, the one worker /app/sw.js is active and nothing waits (${JSON.stringify(s.regs[0]).replaceAll(base, "")})`);
     check(!s.caches.includes("qr-app-dev"), `${tag}, no "dev" copy of QR's cache (${s.caches.join(", ") || "none"})`);
     check(!s.mmsaNotice && !s.qrNote, `${tag}, no "Updated" or "new version" notice`);
   }
