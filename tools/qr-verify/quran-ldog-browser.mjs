@@ -2,7 +2,7 @@
 // QR's own server, signed in through MMSA's own test harness (tools/i18n-verify/harness.mjs and firebase-stub.mjs,
 // copied byte-identical: Firebase is faked at the network layer, so the pages' real code runs).
 // At 390 and 1400: each page loads with no page errors; the Quran wheel; the Read view of Al-Fatiha; an Āyah card;
-// the LDOG routine list, and (QR J04) LDOG's ← Back from a Continue chip. Console errors are listed (not failed): QR does not have every page MMSA's pages link to.
+// the LDOG routine list, and (QR J05) LDOG's ← Back from a Continue chip. Console errors are listed (not failed): QR does not have every page MMSA's pages link to.
 //
 //   node tools/qr-verify/quran-ldog-browser.mjs     (serves itself on PORT, default 8097)
 import { spawn } from "node:child_process";
@@ -118,7 +118,7 @@ DATA.subjects.push(
   const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   check(sw <= cw, `${tag} no sideways scroll (${sw} <= ${cw})`);
   check(pageErrors.length === 0, `${tag} no page errors${pageErrors.length ? ": " + pageErrors.join(" | ") : ""}`);
-  // QR J04: the way-back law. Opened from the menu (no back=1): no ← Back. Opened by a Continue chip (back=1): ← Back.
+  // QR J05: the way-back law. Opened from the menu (no back=1): no ← Back. Opened by a Continue chip (back=1): ← Back.
   check(await page.locator(".bm-back-row").count() === 0, `${tag} no ← Back when opened from the menu`);
   await page.goto(`${process.env.QR_BASE}/app/ldog-study.html?resume=daily_deen_habit&back=1`, { waitUntil: "networkidle", referer: `${process.env.QR_BASE}/app/index.html` });
   await page.waitForSelector(".bm-back-row", { timeout: 15000 }).catch(() => {});
