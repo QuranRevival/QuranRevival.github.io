@@ -64,19 +64,28 @@ const check = (ok, what) => {
   console.log(`${ok ? "ok  " : "FAIL"} ${what}`);
 };
 
-// Counts every time the Asma "new version" note becomes visible, across reloads (sessionStorage), for "at most one".
+// Counts every update notice the reader sees, across reloads, tabs and days (localStorage in the same profile):
+// Asma's "A new version is ready · Reload" and MMSA's "Updated — tap to reload" (sw-register.js's #swUpdateNotice).
 const NOTE_WATCH = () => {
   try {
     if (!localStorage.getItem("mm_disable_screensaver")) localStorage.setItem("mm_disable_screensaver", "1");
+    const bump = (which) => {
+      localStorage.setItem("qr-test-notes", String(Number(localStorage.getItem("qr-test-notes") || 0) + 1));
+      localStorage.setItem("qr-test-notes-log", `${localStorage.getItem("qr-test-notes-log") || ""}${which}@${location.pathname.split("/").pop()} `);
+    };
     const watch = () => {
       const el = document.querySelector("[data-qa-update]");
-      if (!el) return;
-      let shown = !el.hidden;
-      if (shown) sessionStorage.setItem("qr-notes", String(Number(sessionStorage.getItem("qr-notes") || 0) + 1));
+      if (el) {
+        let shown = !el.hidden;
+        if (shown) bump("asma");
+        new MutationObserver(() => { if (!el.hidden && !shown) bump("asma"); shown = !el.hidden; }).observe(el, { attributes: true, attributeFilter: ["hidden"] });
+      }
+      let mmsa = !!document.getElementById("swUpdateNotice");
       new MutationObserver(() => {
-        if (!el.hidden && !shown) sessionStorage.setItem("qr-notes", String(Number(sessionStorage.getItem("qr-notes") || 0) + 1));
-        shown = !el.hidden;
-      }).observe(el, { attributes: true, attributeFilter: ["hidden"] });
+        const now = !!document.getElementById("swUpdateNotice");
+        if (now && !mmsa) bump("mmsa");
+        mmsa = now;
+      }).observe(document.documentElement, { childList: true, subtree: true });
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watch); else watch();
   } catch { /* storage blocked */ }
@@ -107,7 +116,9 @@ await startServer();
 const browser = { };
 try {
   for (const width of WIDTHS) {
-    try { await upgrade(width); } catch (err) { check(false, `@${width} stopped early: ${String(err.message).split("\n")[0]}`); if (!server.listening) await startServer(); }
+    for (const route of ["asma", "quran", "later"]) {
+      try { await upgrade(width, route); } catch (err) { check(false, `@${width} ${route} stopped early: ${String(err.message).split("\n")[0]}`); if (!server.listening) await startServer(); }
+    }
   }
   try { await reverse(); } catch (err) { check(false, `reverse stopped early: ${String(err.message).split("\n")[0]}`); }
   try { await noModuleWorkers(); } catch (err) { check(false, `no-module browser stopped early: ${String(err.message).split("\n")[0]}`); if (!server.listening) await startServer(); }
@@ -119,8 +130,10 @@ void browser;
 console.log(`\n${pass} passed, ${fail} failed${MUTATE ? ` (mutation: ${MUTATE})` : ""}`);
 process.exit(fail ? 1 : 0);
 
-async function upgrade(width) {
-  const tag = `@${width}`;
+/** route: "asma" (Reload, then Asma again), "quran" (Reload, then straight to Quran Study), "later" (the note is
+ *  ignored, the tab closed, and Quran Study opened another day). */
+async function upgrade(width, route) {
+  const tag = `@${width} ${route}`;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qr-phone-"));
   try {
     // ---- The old site (76d3736). ----
@@ -165,21 +178,34 @@ async function upgrade(width) {
     await page.goto(`${base}/app/asma.html`, { waitUntil: "load" });
     await page.waitForSelector("[data-qa-update]:not([hidden])", { timeout: 60000 }).catch(() => {});
     check(await page.locator("[data-qa-update]").isVisible(), `${tag} new site: the reader sees "A new version is ready · Reload"`);
-    await Promise.all([page.waitForEvent("load", { timeout: 60000 }), page.click("[data-qa-update] button")]).catch(() => {});
-    // Settle: the new page registers the module worker; nothing should wait or ask again.
+    if (route === "later") {
+      await ctx.close(); // ignored: the tab is closed
+      ctx = await profile(dir, width);
+      page = ctx.pages()[0] ?? await ctx.newPage();
+      page.setDefaultTimeout(20000);
+      page.on("pageerror", (e) => errors.push(e.message));
+    } else {
+      await Promise.all([page.waitForEvent("load", { timeout: 60000 }), page.click("[data-qa-update] button")]).catch(() => {});
+    }
+    if (route !== "asma") {
+      await page.route("**/archive.org/**", (r) => r.abort());
+      await page.goto(`${base}/app/quranrevival.html`, { waitUntil: "load" });
+    }
+    // Settle: whatever registers on load runs; nothing should wait or ask again.
+    const okReg = (r) => r.length === 1 && [`${base}/app/sw.js`, `${base}/app/sw.js?v=${NEW_V}`].includes(r[0].active) && !r[0].waiting && !r[0].installing;
     let v = null, r = [];
     for (let i = 0; i < 40; i++) {
       await page.waitForTimeout(500);
       r = await regs(page);
       v = await workerVersion(page);
-      if (r.length === 1 && r[0].active === `${base}/app/sw.js` && !r[0].waiting && !r[0].installing && v === NEW_V) break;
+      if (i >= 8 && okReg(r) && v === NEW_V) break;
     }
-    check(r.length === 1 && r[0].active === `${base}/app/sw.js` && !r[0].waiting && !r[0].installing, `${tag} new site: one registration, /app/sw.js active, nothing waiting (${JSON.stringify(r).replaceAll(base, "")})`);
-    check(v === NEW_V, `${tag} new site: the page runs version ${v} (expected ${NEW_V})`);
+    check(okReg(r), `${tag} one registration, QR's worker active, nothing waiting (${JSON.stringify(r).replaceAll(base, "")})`);
+    check(v === NEW_V, `${tag} the page runs version ${v} (expected ${NEW_V})`);
     await page.reload({ waitUntil: "load" });
-    await page.waitForTimeout(3000);
-    const notes = await page.evaluate(() => Number(sessionStorage.getItem("qr-notes") || 0));
-    check(notes === 1 && await page.locator("[data-qa-update]").isHidden(), `${tag} new site: the "new version" note was shown once in all (${notes}), and not again`);
+    await page.waitForTimeout(4000);
+    const notes = await page.evaluate(() => [Number(localStorage.getItem("qr-test-notes") || 0), localStorage.getItem("qr-test-notes-log") || ""]);
+    check(notes[0] <= 1 && !(await page.locator("#swUpdateNotice").isVisible().catch(() => false)), `${tag} at most one update notice in all (${notes[0]}: ${notes[1].trim() || "none"})`);
     const after = await page.evaluate(() => ({ studied: localStorage.getItem("qr_asma_studied_v1"), saver: localStorage.getItem("mm_screensaver"), desc: localStorage.getItem("mmsa.asmaDescriptionSource") }));
     check(after.studied === before.studied && JSON.parse(after.studied ?? "[]").join() === "1,2,3", `${tag} the Studied ticks survive (${after.studied})`);
     check(after.saver === before.saver && JSON.parse(after.saver ?? "{}").eachSec === 5, `${tag} the screensaver settings survive`);
@@ -191,6 +217,7 @@ async function upgrade(width) {
     check(!("qr-app-00.03" in c1) && (c1[`qr-app-${NEW_V}`] ?? 0) > 200, `${tag} qr-app-00.03 deleted, qr-app-${NEW_V} in use (${Object.keys(c1).join(", ")})`);
 
     // ---- Offline after the upgrade. ----
+    if (route !== "asma") { check(errors.length === 0, `${tag} no page errors${errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""}`); await ctx.close(); return; }
     await ctx.setOffline(true);
     await stopServer();
     await page.goto(`${base}/app/asma.html#v=name&n=1`, { waitUntil: "load" }).catch(() => {});

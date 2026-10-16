@@ -48,7 +48,14 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
   `import` statements, so it could not start that way and such a phone stayed on 00.03 for good (measured by
   `tools/qr-verify/upgrade-browser.mjs`). Now `sw.js` has no imports (the version and shell list are written into it
   by `make-precache.mjs`) and runs as classic or module. The phone sees one "new version" note; after Reload the new
-  pages ask for `/app/sw.js` as a module, and because that worker is the SAME version it takes over at once, silently.
+  pages ask for `/app/sw.js` as a module, and because the worker running is the SAME version (started as
+  `sw.js?v=<version>`), that second worker refuses to install. A refused install never reaches "installed", so no page
+  shows a second note (an earlier try, taking over silently with `skipWaiting()`, still let MMSA's `sw-register.js`
+  see "installed" and show "Updated — tap to reload" when the reader closed the tab and came back later). The
+  registration stays on `sw.js?v=<version>` (the same code) until the next version, whose normal install moves it to
+  `/app/sw.js` as a module; until then each page load fetches `sw.js` once and the refused install costs nothing else.
+  `upgrade-browser.mjs` counts both notes (Asma's and MMSA's) on three paths at 390 and 1400: Reload then Asma;
+  Reload then straight to Quran Study; tab closed without Reload, Quran Study opened later. One note each.
   Ticks, settings, the description choice and `qr-quran-v1` (the 51 surahs) survive; `qr-app-00.03` is deleted.
 - **Which browsers run module service workers** (`register(…, { type: "module" })`), as far as I know (check caniuse
   "Module service workers" before relying on a version): Chrome and Edge from 91 (2021), Samsung Internet and other
@@ -200,7 +207,7 @@ Every file QR copied from MMSA is byte-identical to MMSA `077b4db`, except the f
 | File | Change | Source | Job | sha256 (first 16) |
 |---|---|---|---|---|
 | `app/quranrevival.html` | Only the 4-line `#wbwPanel` hunk after line 3573 (it scrolls itself, so "Study this Surah" is never under the dock at 390). MMSA's other change since (a "Legacy App - v10" link) is NOT taken. | MMSA `fb7c01d` (v11.07, PR #889) | QR J02 S1b | `8292a70c8839cb74` |
-| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b | `7535dbc8302a3e66` |
+| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b | `e206216bddfb04c0` |
 
 ## Copy log (every copy from MMSA, newest first)
 

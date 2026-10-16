@@ -365,23 +365,25 @@ async function carryOverPreviousCache() {
 
 // The worker running now is THIS version already, only started another way (J02 S3b): the upgrade from the Asma app
 // first installs this code as "sw.js?v=<version>" (the old page's classic register), then the new pages ask for
-// "/app/sw.js" as a module. Same version, same files, same cache: taking over at once swaps nothing under the reader,
-// so the second step is silent instead of a second "new version" note.
+// "/app/sw.js" as a module. Same version, same files, same cache: there is nothing to install. So the second worker
+// refuses to install (a refused install never reaches "installed", so no page shows a second "new version" note,
+// Asma's or MMSA's). The registration stays on "sw.js?v=<version>" (the same code) until the next version, whose
+// normal install moves it to "/app/sw.js" as a module.
 function activeIsThisVersion() {
   try { return new URL(self.registration.active?.scriptURL ?? "").searchParams.get("v") === APP_VERSION; } catch { return false; }
 }
 
 self.addEventListener("install", (event) => {
+  if (activeIsThisVersion()) {
+    event.waitUntil(Promise.reject(new Error(`QR: version ${APP_VERSION} is already running; nothing to install.`)));
+    return;
+  }
   // Straight from the network (not the browser's HTTP cache), so a new version never saves an old file. Then the
-  // carry-over. No skipWaiting() for a new version: it waits for the reader.
-  const sameVersion = activeIsThisVersion();
+  // carry-over. No skipWaiting(): a new version waits for the reader.
   event.waitUntil((async () => {
     const cache = await caches.open(APP_CACHE);
-    const all = [...PRECACHE, ...SHELL];
-    const missing = sameVersion ? (await Promise.all(all.map(async (p) => ((await cache.match(new URL(p, self.location.href).href)) ? null : p)))).filter(Boolean) : all;
-    await cache.addAll(missing.map((p) => new Request(p, { cache: "reload" })));
+    await cache.addAll([...PRECACHE, ...SHELL].map((p) => new Request(p, { cache: "reload" })));
     await carryOverPreviousCache().catch(() => 0);
-    if (sameVersion) await self.skipWaiting();
   })());
 });
 
