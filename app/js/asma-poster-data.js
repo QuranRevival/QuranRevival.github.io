@@ -16,7 +16,7 @@ export const POSTER_DESCRIPTIONS = Object.freeze({
  "11": "The One who creates something from nothing and determines and creates according to the proper measure and proportion of each thing. The One who plans and determines how, when and where to create. The One whose works are perfectly suited, appropriate, fitting and proper.",
  "12": "The One who brings the creation out of non-existence into existence; Who creates something from nothing; Who invents and innovates with no prior model, and who gives His creation distinct characteristics which distinguishes them from one another. The Creator of the universe and all that it contains.",
  "13": "The One who brings into existence anything that He wills in the shape and form He decides. He has given everything in creation its own distinct design in accordance to His wisdom and He is continuously doing so. He simply says, \"be\" and it is, in the manner and form that He desires. The Designer. The Giver of Forms.",
- "14": "The One forgives those who turn in sincere repentance to Him. The One who continues to forgive and pardon us, again and again, regardless of how many times we sin. He never tires of forgiving us and the quantity of His forgiveness is perpetually abundant.",
+ "14": "The One who forgives those who turn in sincere repentance to Him. The One who continues to forgive and pardon us, again and again, regardless of how many times we sin. He never tires of forgiving us and the quantity of His forgiveness is perpetually abundant.",
  "15": "The One who dominates everything in His kingdom. The One before whom the whole of creation has humbled itself, and submitted, whether willingly or unwillingly, before His Grandeur, power and Perfect Strength. He has power and control over all things and nothing occurs except what He allows.",
  "16": "The One who continually bestows gifts, favors, mercy and success upon all of creation. The One who gives freely and endlessly without expectation of any return. He gives without our earning it/working for it and His gifts are unmatchable. The Bestower who gives whatever He wills to whomsoever He wills.",
  "17": "The One who creates all means of nourishment and subsistence. He is the One who provides everything that is needed (rizq) for everyone, as a means of support and growth for the body, the mind, the heart, and the spiritual life. He gives to everyone, regardless of whether they worship Him, and He apportions these provisions in a manner that befits His wisdom and mercy. The Bestower of Sustenance.",
@@ -24,9 +24,9 @@ export const POSTER_DESCRIPTIONS = Object.freeze({
  "19": "The One whose knowledge is neither acquired through learning, nor preceded by ignorance, nor followed by forgetfulness. He is aware of all things, past, present, and future. The One who has reached perfection in His Knowledge; Who Knows and has always Known. The One who is knowing of our deeds and nothing escapes him; His knowledge encompasses all of creation.",
  "20": "The One Who withholds the provisions, wealth, and sustenance, and seizes the souls of His creation (causing them to die), all in compliance with His wisdom and mercy. He decides when to withhold something or to make it scarce, either physically or spiritually. He withholds and restricts when it is good for us and none can withhold provisions except Him.",
  "21": "The One who is bountiful and giving towards His creatures. He gives and extends provisions, sustenance and wealth freely and with great generosity. He provides for the needs of His creation, bestowing upon them bounties. The One who gives life to the hearts, whose glory and abundance expand the hearts of His creation. The One who releases the souls, allowing them to live. The Extremely Generous.",
- "26": "The One whose hearing and attention comprehends everything. He hears every sound and voice in all their different languages and various needs. He listens to the speech of His creatures: their exchanges, secrets, whispers and conversations, and pays attention to every supplication and invocation. The One who, if the entire universe were to speak at once, He would distinguish each and everyone of their individual sounds.",
+ "26": "The One whose hearing and attention comprehends everything. He hears every sound and voice in all their different languages and various needs. He listens to the speech of His creatures: their exchanges, secrets, whispers and conversations, and pays attention to every supplication and invocation. The One who, if the entire universe were to speak at once, He would distinguish each and every one of their individual sounds.",
  "27": "The One who has insight into all things and who perceives every detail, every state of existence, and every circumstance. He is aware of everything that takes place in the universe, even down to the most minuscule, seemingly invisible action, and He recompenses His servants accordingly by His wisdom and ultimate justice. The All-Perceiving, The All-Comprehending.",
- "28": "The most just Judge. The One who judges between His servants in this life and the Hereafter with truth, wisdom, fairness, complete justice and immense mercy. He will not oppress anyone to the extent of an atoms weight, and none will be made to carry the encumbrance of another. No servant will be recompensed in a way that is greater that the magnitude of his or her sin, rather, each servant will be given only what he or she deserves. The Arbitrator, The Giver of Justice.",
+ "28": "The most just Judge. The One who judges between His servants in this life and the Hereafter with truth, wisdom, fairness, complete justice and immense mercy. He will not oppress anyone to the extent of an atom's weight, and none will be made to carry the encumbrance of another. No servant will be recompensed in a way that is greater than the magnitude of his or her sin, rather, each servant will be given only what he or she deserves. The Arbitrator, The Giver of Justice.",
  "30": "The One who is knowledgeable of the most subtle and minuscule matters that will lead to His slaves' well-being. He is Well-Aware of the situations of His servants, and nothing is hidden from Him of thoughts, hopes and secrets. He knows how to guide them to what will benefit them, and He does so with kindness, love and gentleness.",
  "31": "The One whose knowledge encompasses all of the outward and hidden matters, the open and secret, all those things that must necessarily occur, are impossible to occur, and can possibly occur, of the past, present, and future affairs of the whole of creation. He knows the internal and external qualities of things and there is absolutely nothing that is hidden from Him.",
  "33": "The One Who is greater, more exalted and magnificent than anything. The Mighty One in His power, gravity and eminence. Everything is subject to His might and power, and nothing is higher, greater or superior to Him. He possesses all of the qualities of Magnification, and no creature can praise Him to the degree that He truly deserves, rather He is as He has praised Himself, and He is above the praise of His creatures.",
@@ -48,7 +48,7 @@ export const POSTER_DESCRIPTIONS = Object.freeze({
  "52": "The One who guides the believers, protects them from harm, and guards them. He is the trustee over His creatures and is the Disposer of affairs for everything in existence. The One who gives provision and protection and controls all that occurs. The Ultimate Trustee.",
  "53": "The Strong One Who is capable of doing what He wills. There is nothing capable of defeating Him or of thwarting His decree. The One to Whom belongs all Might; the might of power, dominance and superiority. All creatures are subdued by Him, yielding and submitting to His Greatness. None can overcome Him and stand against His Decree; it is carried out with perfection and full effect in accordance with His Knowledge and Wisdom.",
  "54": "The One Who is firm and strong. He is not in need of anything; He is not in need of His creation. Rather, His creation is completely in need of Him. The One Who is most strong in His power and ability, neither weariness nor toil ever touches Him; His strength knows no bounds and He is able to do all things. The Most Strong.",
- "56": "The One Who is worthy of All Praise. He deserves to be praised in all of His deeds, sayings, laws commands and prohibitions. He possesses the most perfect of attributes and best and most complete actions, for His actions are based upon Grace and Justice. He Who has created, provided, and bestowed His favors upon His creation and deserves to be praised at all times.",
+ "56": "The One Who is worthy of All Praise. He deserves to be praised in all of His deeds, sayings, laws, commands and prohibitions. He possesses the most perfect of attributes and best and most complete actions, for His actions are based upon Grace and Justice. He Who has created, provided, and bestowed His favors upon His creation and deserves to be praised at all times.",
  "62": "The Ever-Living One Who has no beginning and no end. He lives and does not die. He gives life to everything else in disposing of all matters and apportioning of all things. The One Who has perfect life, existing in and of Himself, not dependent upon anyone else. His life is far removed from resembling the imperfect life of His creatures.",
  "63": "The One Who has perfect power, existing in and of Himself and not dependent upon anyone else. The One who is Self-Subsisting, and by Whom all things subsist. The Caretaker who manages and sustains, protects, and preserves His creation, and runs all affairs in accordance with His knowledge, wisdom, and justice.",
  "66": "The One who is Unique in His Essence and unrivaled, unparalleled and unmatched in His Perfection. He has no partner, no equal and no rival and there is absolutely nothing like unto Him. The One and Only deity (Ilaha), RABB of all of Creation, who requires no second or partner and is alone in His divinity. The only one worthy of worship, whose decree is to be followed and observed and of whom nothing can share in the obedience and worship that is due to Him.",
@@ -60,7 +60,7 @@ export const POSTER_DESCRIPTIONS = Object.freeze({
  "73": "The One Whose existence is without a beginning. The First, there is nothing that came before Him. He has always existed and nothing preceded Him in existence. Everything else has been created and gone from a state of non-existence to existence, except Allah.",
  "74": "The One Whose existence is without end. The Last, there is nothing that will come after Him or exist after Him, for He will exist always and for eternity, while everything else will eventually perish.",
  "75": "The One Who is above everything else, He is the Most High, above all things, and there is nothing higher than Him. The One Who is the Uppermost by virtue of His Wisdom, power of creation, actions and all the blessings which He bestows. His existence is obvious by proofs. The Manifest. The Outward. The Triumphant.",
- "76": "The One Who is nearer than anything in existence, nothing can be closer to anything than Him. He is near us through His knowledge, hearing, and sight and He is knowing of all things. The Inward, Who knows the innermost matters, all that is secret and hidden, down to the smallest matters. The One Who us keenly discerning.",
+ "76": "The One Who is nearer than anything in existence, nothing can be closer to anything than Him. He is near us through His knowledge, hearing, and sight and He is knowing of all things. The Inward, Who knows the innermost matters, all that is secret and hidden, down to the smallest matters. The One Who is keenly discerning.",
  "78": "The One Who is above His creation in irresistible Power and Might. The One Who is Most High; an absolute Highness in every sense. He is free from all partners and defects in His sublimity, there is nothing similar unto Him, the attributes of creation cannot compare to Him, and He holds dominance and power over all. He is the One, the Irresistible, who compels all of the creation with His Might and Exaltedness. Whatever He wills will be and none can resist Him in that. The Most High, The Sublime.",
  "79": "The One Who is Most Kind, Courteous & Generous. Whose generosity is expansive. He is gentle with His servants and does not want hardship for them. He pardons our many sins & wrongdoings and does not take us to account for all of our crimes. He rewards our good deeds with ten more like it, while He does not recompense a sin with more, and He does not hold our desire to sin against us.",
  "80": "The One who is continuously turning [in forgiveness] to those who turn to Him [in repentance] and the One who forgives the sins of the penitent. The One who grants us the ability to repent, directs our hearts towards Him, then accepts our [sincere] repentance and forgives our errors. The only One whose forgiveness and mercy know no bounds.",
@@ -73,9 +73,9 @@ export const POSTER_DESCRIPTIONS = Object.freeze({
  "102": "The One, the Only, the Single. He has no partners. He is the only deity worthy of worship and only creator and RABB of the universe. He has no equal in His essence, names, attributes and actions. The One Who loves everything odd in number which He has ordained. He is One and Unique and loves to be singled out as the One True deity (Ilaha) Who exclusively deserves to be worshipped.",
  "104": "The One Who is above all that is not befitting to Him and He is above all the shortcomings and (imperfect) qualities which are inherent in His creation. He is far removed from every evil, imperfection, shortcoming, partner, companion, offspring and everything that is not fitting for Divinity. The All Perfect. There is nothing like unto Him.",
  "105": "The Most High One Who is above all others. The One Who has risen over His throne and Who has encompassed the dominion. There is no one who is equal or even comparable to Him. He is free from any supposed evil, and from what heretics and disbelievers may say about Him. The One Who is Most High in all of His names and attributes, and the most Exalted and Supreme. The One in Whom all the attributes of greatness, grandeur, magnificence, and beauty find perfection and fulfillment.",
- "108": "The One Who is the Master; Sovereign of the Universe. All of creation is enslaved to Him. The One Who is needed in an absolute sense. No created being is independent of Him. If He did not create them, they would not exist, and if He did not sustain them after creating them, they would not remain. If He did not help them with all that they are faced with, they would have no help besides Him. The One Whom the entire creation turns to to satisfy their needs. The Master of everything and everyone.",
+ "108": "The One Who is the Master; Sovereign of the Universe. All of creation is enslaved to Him. The One Who is needed in an absolute sense. No created being is independent of Him. If He did not create them, they would not exist, and if He did not sustain them after creating them, they would not remain. If He did not help them with all that they are faced with, they would have no help besides Him. The One Whom the entire creation turns to satisfy their needs. The Master of everything and everyone.",
  "109": "The One Who encompasses everything in His mercy, knowledge, ability, hearing, and seeing. He has knowledge of everything, and surrounds and thoroughly comprehends (all things). The One Who has power and dominance over everything, and encompasses or surrounds it, such that nothing can escape from Him or elude Him.",
- "110": "The One Who has complete and perfect power and ability by which He brought everything into existence and by which arranges all affairs. The Omnipotent, the All-Powerful, the Master of all things. The One Who, when He will a thing to be, He merely says, \"Be!\" and it is. Every created being's capabilities are based entirely upon the whatever strength and ability Allah gives to it.",
+ "110": "The One Who has complete and perfect power and ability by which He brought everything into existence and by which He arranges all affairs. The Omnipotent, the All-Powerful, the Master of all things. The One Who, when He wills a thing to be, He merely says, \"Be!\" and it is. Every created being's capabilities are based entirely upon whatever strength and ability Allah gives to it.",
  "111": "The One Who has made everything subdued and submissive. He has subdued all of His creatures; everything in the upper and lower worlds is subservient to His will and authority, including tyrants who will be humbled before Him. All creatures are in need of Him and they have no control of good or harm upon themselves. The One Who can prevent His servants from achieving their desires, as well as help and sustain them. The Irresistible, Over-Powering One.",
  "113": "The One Who is the owner of majesty and honor. The One Who is the owner of all things, and all are under His command. He is the majestic Sovereign Who created everything and controls all destiny. The One Who directs all of the affairs to do with creation, command, and recompense. To Him belongs the whole of creation, all of it is subservient, owned by, and in continuous need of Him. The Omnipotent King. The Sovereign.",
  "114": "The One Who creates everything in the creation and is not weakened or affected by this. He only commands a thing once, 'Be!', and it is. He creates continuously, not after the similitude of anything pre-existing, but brings into a state of existence from a state of non-existence according to a pre-determination required by His wisdom. He creates in perfection and administers the creation of all of His creatures.",
@@ -87,10 +87,10 @@ export const POSTER_DESCRIPTIONS = Object.freeze({
  "120": "The One Who constantly does that which is Good with Perfection. He showers the good and the bad, the believing and unbelieving, of His creation with Ihsan (goodness and favors). The One Who is benevolent, generous, bountiful, kind and compassionate. He has shown mankind the two ways of good and evil, and He gives them the ability to enjoin what is good and forbid what is evil. The Charitable. The One Who Acts in a Good & Fine Manner.",
  "121": "The One Who is kind, compassionate and gentle. He showers His servants with mercy and forgiveness. He loves gentleness and kindness in all matters, and He gives, as a result of it, what He does not give for harshness. The One Who embodies with perfection the greatest gentleness and benevolence.",
  "122": "The One Who is beautiful and loves beauty. He is beautiful in His essence, His names, His attributes, and His actions. Suffice it is that if He would uncover the veil of His face, the brightness and magnificence of His beauty would burn His creation so far as it reaches. He has adorned the universe with great beauty and splendor and loves beauty (both inward and outward) in His creation.",
- "124": "The One with full and perfect Knowledge, from which nothing is hidden. His Knowledge comprehends all things, the covert and overt, the small and the great, the concealed and revealed. He alone who holds the keys to the unseen: what is in the womb, what the future holds, when the rain will fall, where each creature will perish, and when the Hour will be established. The One from whom nothing is concealed on the earth or in the heavens.",
+ "124": "The One with full and perfect Knowledge, from which nothing is hidden. His Knowledge comprehends all things, the covert and overt, the small and the great, the concealed and revealed. He alone holds the keys to the unseen: what is in the womb, what the future holds, when the rain will fall, where each creature will perish, and when the Hour will be established. The One from whom nothing is concealed on the earth or in the heavens.",
  "127": "The One Who is Good, Pure, far removed from every imperfection and deficiency. He has only exceptional qualities; qualities of perfection. He is the most excellent, superior, bountiful, and virtuous. The One Who only accepts that which is good and pure from the sayings and actions of His servants. The Good.",
  "128": "The One who guides and protects the believers from harm, loves them, and shows them mercy. He is the Helper and Supporter who backs and strengthens the believers. The One who is entrusted in neither humiliating His friends nor in ruining them; The One who aids them against their enemies.",
- "132": "The One who is Worshipped and shown Servitude. He is the One & Only Deity, the One Who is Worshipped and the One Who deserves to be worshipped by the whole of His creation, due to the Perfect Godly Attributes that He is described with. The One who is absolutely independent upon who all depend. He does not beget, nor was He begotten and there is none comparable to Him. This is Allah’s Personal Name. This Name only belongs to Allah, no one else can have it besides Him."
+ "132": "The One who is Worshipped and shown Servitude. He is the One & Only Deity, the One Who is Worshipped and the One Who deserves to be worshipped by the whole of His creation, due to the Perfect Godly Attributes that He is described with. The One who is absolutely independent, upon whom all depend. He does not beget, nor was He begotten and there is none comparable to Him. This is Allah’s Personal Name. This Name only belongs to Allah, no one else can have it besides Him."
 });
 
 /** The poster's Arabic, fully vowelled, from the same archive posters. */
@@ -195,7 +195,7 @@ export const POSTER_MEANINGS = Object.freeze({
  "6": "The One Who Gives Emaan & Security",
  "7": "The Protector & Overseer",
  "8": "The Mighty",
- "9": "The Compellor & Restorer",
+ "9": "The Compeller & Restorer",
  "10": "The Superior, The Majestic",
  "11": "The Creator",
  "12": "The Originator, The Inventor",
@@ -289,16 +289,58 @@ export const POSTER_REWORDED = Object.freeze([
   "why": "decision 49, in the template's form"
  },
  {
+  "number": 9,
+  "from": "The Compellor & Restorer",
+  "to": "The Compeller & Restorer",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 14,
+  "from": "The One forgives those who turn in sincere repentance to Him.",
+  "to": "The One who forgives those who turn in sincere repentance to Him.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 26,
+  "from": "The One who, if the entire universe were to speak at once, He would distinguish each and everyone of their individual sounds.",
+  "to": "The One who, if the entire universe were to speak at once, He would distinguish each and every one of their individual sounds.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 28,
+  "from": "He will not oppress anyone to the extent of an atoms weight, and none will be made to carry the encumbrance of another.",
+  "to": "He will not oppress anyone to the extent of an atom's weight, and none will be made to carry the encumbrance of another.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 28,
+  "from": "No servant will be recompensed in a way that is greater that the magnitude of his or her sin, rather, each servant will be given only what he or she deserves.",
+  "to": "No servant will be recompensed in a way that is greater than the magnitude of his or her sin, rather, each servant will be given only what he or she deserves.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
   "number": 51,
   "from": "The One who is the only true god.",
   "to": "The One who is the only true deity (Ilaha).",
   "why": "decision 49, in the template's form"
  },
  {
+  "number": 56,
+  "from": "He deserves to be praised in all of His deeds, sayings, laws commands and prohibitions.",
+  "to": "He deserves to be praised in all of His deeds, sayings, laws, commands and prohibitions.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
   "number": 66,
   "from": " The One and Only God, Lord of all of Creation, who requires no second or partner and is alone in His divinity.",
   "to": " The One and Only deity (Ilaha), RABB of all of Creation, who requires no second or partner and is alone in His divinity.",
   "why": "decision 49, in the template's form"
+ },
+ {
+  "number": 76,
+  "from": "The One Who us keenly discerning.",
+  "to": "The One Who is keenly discerning.",
+  "why": "spelling or grammar (QR J01 R5)"
  },
  {
   "number": 100,
@@ -311,5 +353,41 @@ export const POSTER_REWORDED = Object.freeze([
   "from": "The One, the Only, the Single. He has no partners. He is the only deity worthy of worship and only creator and Lord of the universe. He has no equal in His essence, names, attributes and actions. The One Who loves everything odd in number which He has ordained. He is One and Unique and loves to be singled out as the One True God Who exclusively deserves to be worshipped.",
   "to": "The One, the Only, the Single. He has no partners. He is the only deity worthy of worship and only creator and RABB of the universe. He has no equal in His essence, names, attributes and actions. The One Who loves everything odd in number which He has ordained. He is One and Unique and loves to be singled out as the One True deity (Ilaha) Who exclusively deserves to be worshipped.",
   "why": "the Owner's template text"
+ },
+ {
+  "number": 108,
+  "from": "The One Whom the entire creation turns to to satisfy their needs.",
+  "to": "The One Whom the entire creation turns to satisfy their needs.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 110,
+  "from": "The One Who has complete and perfect power and ability by which He brought everything into existence and by which arranges all affairs.",
+  "to": "The One Who has complete and perfect power and ability by which He brought everything into existence and by which He arranges all affairs.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 110,
+  "from": "The One Who, when He will a thing to be, He merely says, \"Be!\" and it is.",
+  "to": "The One Who, when He wills a thing to be, He merely says, \"Be!\" and it is.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 110,
+  "from": "Every created being's capabilities are based entirely upon the whatever strength and ability Allah gives to it.",
+  "to": "Every created being's capabilities are based entirely upon whatever strength and ability Allah gives to it.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 124,
+  "from": "He alone who holds the keys to the unseen: what is in the womb, what the future holds, when the rain will fall, where each creature will perish, and when the Hour will be established.",
+  "to": "He alone holds the keys to the unseen: what is in the womb, what the future holds, when the rain will fall, where each creature will perish, and when the Hour will be established.",
+  "why": "spelling or grammar (QR J01 R5)"
+ },
+ {
+  "number": 132,
+  "from": "The One who is absolutely independent upon who all depend.",
+  "to": "The One who is absolutely independent, upon whom all depend.",
+  "why": "spelling or grammar (QR J01 R5)"
  }
 ]);

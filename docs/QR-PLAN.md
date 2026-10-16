@@ -211,7 +211,7 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
 
 Every change to a file the worker saves bumps `APP_VERSION` in `app/js/qr-version.js` (standing rule, QR Architect).
 00.01 = R2 (offline); 00.02 = R3 (screensaver); 00.03 = R4 (About and privacy page, manifest screenshots);
-00.04 = J02 S3 (one worker); 00.05 = J02 S3b (upgrade path); 00.06 = J02 S4 (front page, links); 00.07 = J02 S4b (two MMSA fixes: OpenITI credit, folder menu); 00.08 = J02 S4f (Read bar: MMSA v11.12, v11.13); 00.09 = J02 S4c (Explore Asma wheel fit); 00.10 = J02 S1d (Hadith read from MMSA); 00.11 = J02 S1e (the S1b pages live in MMSA).
+00.04 = J02 S3 (one worker); 00.05 = J02 S3b (upgrade path); 00.06 = J02 S4 (front page, links); 00.07 = J02 S4b (two MMSA fixes: OpenITI credit, folder menu); 00.08 = J02 S4f (Read bar: MMSA v11.12, v11.13); 00.09 = J02 S4c (Explore Asma wheel fit); 00.10 = J02 S1d (Hadith read from MMSA); 00.11 = J02 S1e (the S1b pages live in MMSA); 00.12 = J01 R5 (Asma poster data: 112, typos).
 
 ## Never changes (shared with MMSA)
 
@@ -254,6 +254,34 @@ the signed-in QR (QR J02).
 - `node tools/qr-verify/mmsa-drift.mjs <MMSA checkout at 077b4db>`: every file QR shares with MMSA is identical or in
   the "Deliberate changes from the copy point" table (with its sha256). Run it after every copy or change.
 - `node tools/qr-verify/asma-local-sync.mjs <MMSA checkout>`: `app/js/asma-local.js` still matches MMSA, function by function.
+
+## Asma poster data (QR J01 R5; QR is its home, PCA J71)
+
+- **Where it comes from:** `tools/asma-poster/build-poster-data.mjs` writes `app/js/asma-poster-data.js` from
+  `docs/reference/2026-10-01-asma-poster-descriptions.json` (the Owner's 93 archive posters, transcribed as printed),
+  `app/js/asma-data.js`, `app/js/asma-collections-data.js` and `tools/quran-data-pull/output/surah-index.json`.
+  Copied from MMSA `7861b96` (v11.11). MMSA's copy is frozen; fixes are made here. The template image the README names
+  (`docs/reference/2026-10-07-asma-poster-template-al-witr.png`, 2 MB) is not needed to regenerate and stays in MMSA.
+  Re-run: `node tools/asma-poster/build-poster-data.mjs`; `--check` (in `asma-poster-data-check.mjs`, npm test).
+- **112 Al-Maalik (المالك):** it carried 113 Al-Maleek's (المَلِيكُ) Arabic, meaning and description. Cause (MMSA's
+  finding, confirmed here): the generator matched a Name to a poster by Arabic, then by transliteration, and
+  `normTr` reduces both "Al-Maalik" and "Al-Maleek" to "malik". The archive has no Al-Maalik poster: the file
+  "(Maalik) Al-Maalik.jpg" shows **Al-Malik (#3)** (checked on the image: "Al-Malik · The King & Owner of
+  Dominion · الْمَلِكُ"). Fix: MMSA v11.11's guard, line for line (the fallback may not pair different Arabic words).
+  112 now shows its own المالك, no English meaning line and "no description yet"; nothing is invented. Its Bangla
+  meaning stays the Name list's ("অধিপতি"). The screensaver photo is captioned "Al-Malik".
+- **Spelling and grammar (13 fixes, in the generator's `TYPOS`, each listed in `POSTER_REWORDED`):** 9 meaning
+  "Compellor" → "Compeller"; 14 "The One forgives" → "The One who forgives"; 26 "each and everyone" → "each and every
+  one"; 28 "an atoms weight" → "an atom's weight", "greater that" → "greater than"; 56 "laws commands" → "laws,
+  commands"; 76 "Who us keenly" → "Who is keenly"; 108 "turns to to satisfy" → "turns to satisfy"; 110 "by which
+  arranges" → "by which He arranges", "when He will a thing" → "when He wills a thing", "upon the whatever strength"
+  → "upon whatever strength"; 124 "He alone who holds" → "He alone holds"; 132 "independent upon who all depend" →
+  "independent, upon whom all depend".
+- **Not changed, for the QR Architect:** 132 Allah's meaning line "{The Grand Name}": the poster prints it inside
+  curly braces (the transcription notes say so); the archive's file name says "The Proper Name"; the Name list
+  (`asma-collections-data.js`) gives no English meaning (Bangla "আল্লাহ"). Options: keep it as printed; "The Grand
+  Name" without braces; "The Proper Name". The template pill "Aqhlaq" is in the frame image
+  (`app/img/asma-poster-frame.webp`), not text; left as it is.
 
 ## Pinned files (owner MMSA)
 
@@ -311,9 +339,12 @@ Every file QR copied from MMSA is byte-identical to MMSA `077b4db`, except the f
 | `app/js/i18n/bn.js` | Only the two Bangla lines of the About page's OpenITI credit. MMSA's other bn.js line since 077b4db ("Legacy App - v10 ↗") NOT taken. | MMSA `5d14cb2` (v11.10, PR #893) | QR J02 S4b | `353b599ff9bf8273` |
 | `tools/i18n-verify/ayah-related-hadith-browser.mjs` | MMSA's check as at v11.10 (it checks the OpenITI credit); carried to run against QR. | MMSA `5d14cb2` (v11.10, PR #893) | QR J02 S4b | `9434c4715d7e4f64` |
 | `tools/i18n-verify/audit-part12-words-browser.mjs` | MMSA's check as at v11.10 ("OpenITI" allowed as a source name on the Bangla page); carried to run against QR. | MMSA `5d14cb2` (v11.10, PR #893) | QR J02 S4b | `2eed642976ddd95f` |
+| `app/js/asma-poster-data.js` | QR is this data's home (PCA J71). Regenerated by `tools/asma-poster/build-poster-data.mjs`: MMSA v11.11's 112 fix (112 Al-Maalik no longer carries 113 Al-Maleek's Arabic, meaning and description; byte-identical to MMSA `7861b96` before QR's own fixes), then QR J01 R5's 13 spelling and grammar fixes (listed in the file's `POSTER_REWORDED`). | MMSA `7861b96` (v11.11, PR #896); QR J01 R5 | QR J01 R5 | `d58f66a8d85c9b8f` |
+| `tools/asma-poster/build-poster-data.mjs` | MMSA `7861b96`'s generator (its 112 guard, line for line), plus QR J01 R5's `TYPOS` list and `--check`. | MMSA `7861b96` (v11.11, PR #896); QR J01 R5 | QR J01 R5 | `1b3f97b676473e5d` |
+| `app/js/asma-posters.js` | One caption: the archive photo "(Maalik) Al-Maalik.jpg" shows Al-Malik (#3), so it is captioned "Al-Malik"; 112 Al-Maalik has no photo. | QR J01 R5 (MMSA's finding, checked on the image) | QR J01 R5 | `a17dc0f6ebf2ac51` |
 | `app/index.html` | QR's own front page (the same file as the site's `/index.html`), not MMSA's one-line redirect to `quranrevival.html`. | QR's own | QR J02 S4 | `0e39b69471068de1` |
 | `app/quranrevival.html` | Three hunks only. (1) The 4-line `#wbwPanel` hunk after line 3573 (it scrolls itself, so "Study this Surah" is never under the dock at 390). (2) J02 S4f: the Read bar CSS hunk after the `.ayah-card-back-pill.back-docked` rules (two `@media` blocks, max-width 420px and 340px: the way back shares a line on a small phone), byte for byte. (3) J02 S4f: in the `min-width: 900px` query, `#readToolsBtn { display: none; }` becomes `#readBar #readToolsBtn { display: none; }` with MMSA's comment (a dead ⋯ showed from 900px: `#readBar .qr-ico` beat the bare rule). MMSA's other changes since (a "Legacy App - v10" link) are NOT taken. | (1) MMSA `fb7c01d` (v11.07, PR #889); (2) MMSA `391d21b` (v11.12, PR #892); (3) MMSA `ac3b917` (v11.13, PR #895) | QR J02 S1b, J02 S4f | `d2e9f373ceb1cf27` |
-| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names; J02 S4: adds `js/qr-copied-page.js` (S4c; it starts `qr-links.js`) to each copied page as it serves it. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b, J02 S4, J02 S4c, J02 S1d | `c64a09d790f3ce79` |
+| `app/sw.js` | QR's own worker, not MMSA's: Asma's (J01 R2), then ONE module worker for every QR page (J02 S3), reproducing MMSA 077b4db's worker under QR cache names; J02 S4: adds `js/qr-copied-page.js` (S4c; it starts `qr-links.js`) to each copied page as it serves it. | QR's own | QR J01 R2, J02 S1, J02 S3, J02 S3b, J02 S4, J02 S4c, J02 S1d | `21d3afd875b11876` |
 
 ## Copy log (every copy from MMSA, newest first)
 
