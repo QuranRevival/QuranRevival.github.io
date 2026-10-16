@@ -27,7 +27,15 @@ http.createServer((req, res) => {
   const filePath = path.join(ROOT, urlPath);
   if (!filePath.startsWith(ROOT + path.sep)) { res.writeHead(403); res.end("Forbidden"); return; }
   fs.readFile(filePath, (err, data) => {
-    if (err) { res.writeHead(404, { "Content-Type": "text/plain" }); res.end("Not found: " + urlPath); return; }
+    if (err) {
+      // As GitHub Pages: a missing address gets the site's own 404.html, with status 404 (QR J02 S4).
+      fs.readFile(path.join(ROOT, "404.html"), (err2, page) => {
+        if (err2) { res.writeHead(404, { "Content-Type": "text/plain" }); res.end("Not found: " + urlPath); return; }
+        res.writeHead(404, { "Content-Type": MIME[".html"] });
+        res.end(page);
+      });
+      return;
+    }
     res.writeHead(200, { "Content-Type": MIME[path.extname(filePath)] || "application/octet-stream" });
     res.end(data);
   });

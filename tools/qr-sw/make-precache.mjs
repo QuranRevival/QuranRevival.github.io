@@ -8,7 +8,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const PAGES = ["quranrevival.html", "ldog-study.html", "notes.html", "bookmarks.html", "journey-map.html", "records.html", "monitor.html", "about.html", "onboarding.html", "import-notes.html", "accept-invite.html"];
+// J02 S4: index.html is QR's front page (the same file as the site's own /index.html).
+export const PAGES = ["index.html", "quranrevival.html", "ldog-study.html", "notes.html", "bookmarks.html", "journey-map.html", "records.html", "monitor.html", "about.html", "onboarding.html", "import-notes.html", "accept-invite.html"];
 const re = /(?:(?:import|export)\s[^'"]*?from\s*|import\s*\(\s*|import\s+)["'](\.{1,2}\/[^"']+\.js)["']/g;
 
 export function shellList() {
@@ -23,7 +24,10 @@ export function shellList() {
     const html = fs.readFileSync(`app/${page}`, "utf8");
     for (const m of html.matchAll(/(?:href|src)="(?:\.\/)?((?:css|vendor|img|fonts)\/[^"#?]+)"/g)) extra.add(`app/${m[1]}`);
     for (const m of html.matchAll(/url\(['"]?(?:\.\/)?(fonts\/[^'")]+)['"]?\)/g)) extra.add(`app/${m[1]}`);
+    for (const m of html.matchAll(/<script[^>]*\ssrc="(?:\.\/)?(js\/[^"#?]+\.js)"/g)) walk(`app/${m[1]}`);
   }
+  // J02 S4: app/sw.js adds this module to each copied page as it serves it (the links to pages QR does not hold).
+  walk("app/js/qr-links.js");
   for (const css of [...extra].filter((f) => f.endsWith(".css"))) {
     for (const m of fs.readFileSync(css, "utf8").matchAll(/url\(['"]?\.\.\/((?:fonts|img)\/[^'")]+)['"]?\)/g)) extra.add(`app/${m[1]}`);
   }

@@ -5,7 +5,7 @@
 import { spawn } from "node:child_process";
 import { chromium } from "playwright";
 
-const PAGES = ["/", "/app/asma.html", "/app/asma-about.html"]; // QR J01 R1: the Asma app (no sign-in)
+const PAGES = ["/", "/app/index.html", "/app/asma.html", "/app/asma-about.html"]; // QR J01 R1: the Asma app (no sign-in); J02 S4: the front page (both addresses)
 const WIDTHS = [390, 1400];
 const SCHEMES = ["light", "dark"];
 const PORT = Number(process.env.PORT) || 8090;
