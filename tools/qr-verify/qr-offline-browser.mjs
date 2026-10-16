@@ -204,7 +204,10 @@ async function versionBump() {
   check(before.keys.includes(`qr-app-${V1}`) && before.has, `update: before, qr-app-${V1} holds data opened on use (surah-index.json)`);
   await page.evaluate(async () => { await (await caches.open("mm-app-11.04")).put("/x", new Response("x")); });
 
+  // A real bump changes app/js/qr-version.js AND the copy make-precache.mjs writes into app/sw.js (J02 S3b).
   overrides.set("/app/js/qr-version.js", (t) => t.replace(`APP_VERSION = "${V1}"`, `APP_VERSION = "${V2}"`));
+  const swBefore = overrides.get("/app/sw.js");
+  overrides.set("/app/sw.js", (t) => (swBefore ? swBefore(t) : String(t)).replace(`const APP_VERSION = "${V1}";`, `const APP_VERSION = "${V2}";`));
   await page.reload({ waitUntil: "load" });
   await page.waitForSelector("#swUpdateNotice", { timeout: 60000 }).catch(() => {});
   check(await page.locator("#swUpdateNotice").isVisible().catch(() => false), `update: Quran Study shows MMSA's "Updated — tap to reload"`);
@@ -219,5 +222,6 @@ async function versionBump() {
   check(kept.every((k) => after.includes(k)), `update: only qr-app- went (${kept.join(", ")} kept)`);
   check(errors.length === 0, `update: no page errors${errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""}`);
   overrides.delete("/app/js/qr-version.js");
+  if (swBefore) overrides.set("/app/sw.js", swBefore); else overrides.delete("/app/sw.js");
   await ctx.close();
 }

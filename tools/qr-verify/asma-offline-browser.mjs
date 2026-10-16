@@ -248,7 +248,10 @@ async function versionBump() {
   const before = await cacheReport(page);
   check(!!before[`qr-app-${V1}`] && "qr-quran-v1" in before, `update: before, qr-app-${V1} and qr-quran-v1 (${Object.keys(before).join(", ")})`);
 
+  // A real bump changes app/js/qr-version.js AND the copy make-precache.mjs writes into app/sw.js (J02 S3b).
   overrides.set("/app/js/qr-version.js", (t) => t.replace(`APP_VERSION = "${V1}"`, `APP_VERSION = "${V2}"`));
+  const swBefore = overrides.get("/app/sw.js");
+  overrides.set("/app/sw.js", (t) => (swBefore ? swBefore(t) : String(t)).replace(`const APP_VERSION = "${V1}";`, `const APP_VERSION = "${V2}";`));
   const marker = await page.evaluate(() => (window.__qrMarker = Math.random()));
   await page.reload({ waitUntil: "load" });
   await page.waitForSelector("[data-qa-update]:not([hidden])", { timeout: 30000 }).catch(() => {});
@@ -273,6 +276,7 @@ async function versionBump() {
   check(await page.locator('[data-qa-detail="5"]').count() === 1, `update: the reader is back on the same Name after Reload`);
   check(errors.length === 0, `update: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
   overrides.delete("/app/js/qr-version.js");
+  if (swBefore) overrides.set("/app/sw.js", swBefore); else overrides.delete("/app/sw.js");
   await ctx.close();
 }
 
