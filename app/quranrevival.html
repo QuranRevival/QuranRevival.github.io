@@ -742,6 +742,9 @@
   .wheel-zab-dock { display: inline-flex; align-items: center; flex: 0 0 auto; }
   .wheel-zab-dock:empty { display: none; }
   @media (max-width: 767px) { .wheel-drawer-row:has(.zab-dock-btn) .wheel-drawer-btn { min-width: 4.6rem; } } /* audit-zab dock-row-fit */
+  /* QR J20 (MSA audit part 38): in a short window (phone landscape) the wheel column runs past #app, so the page could
+     not scroll its last row (Wheel / Legend / Unit) clear of the fixed Zab bar; room below it lets every control rise above. */
+  @media (min-width: 768px) and (max-height: 500px) { body.zab-bar-on .wheel-col { padding-bottom: 60px; } }
   .wheel-drawer-btn {
     flex: 1 1 0; min-width: 0; min-height: 40px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
     padding: 0.25rem 0.5rem; border: 1px solid var(--card-line); border-radius: 999px; background: transparent; color: var(--card-text);
@@ -866,6 +869,11 @@
   @keyframes muTwinkle { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
   @keyframes muShine { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .mu-rays, .mu-glow, .mu-spark path { animation: none; } }
+  /* QR J20 (MSA audit part 38): reduced motion also stops the veiled wheel's fade and the Mushaf pages' smooth scroll. */
+  @media (prefers-reduced-motion: reduce) {
+    .wheel-veiled #wheelContainer svg { transition: none; }
+    #pageViewContainer, html body.read-sideways #pageViewContainer { scroll-behavior: auto; }
+  }
 
   /* Shell round 7: the landing wheel card stretches to fill the stage, and
      the approaches list -- not the dark background -- absorbs the leftover
