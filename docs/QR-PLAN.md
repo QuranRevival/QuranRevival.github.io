@@ -95,8 +95,8 @@ cannot clash, and keeping them keeps the shared scripts identical with MMSA.
 ## Quran Study and LDOG in QR (QR J02 S1, not released)
 
 - Copied unchanged from MMSA `077b4db` (Copy log). They sign in with the shared Firebase project (`firebase-init.js`
-  copied as is), which works on this address only after the owner adds `quranrevival.github.io` to Firebase
-  Authentication's authorised domains.
+  copied as is); `quranrevival.github.io` is in Firebase Authentication's authorised domains (the Owner checked,
+  18 Oct 2026, PCA J110).
 - **One worker for `/app/`:** these pages call MMSA's `sw-register.js`, which registers `/app/sw.js` as a module
   worker with no `?v=`. Measured: that made a second "dev" copy of QR's worker (cache `qr-app-dev`) and the two took
   turns waiting, each page showing an "update" the other undid. `app/sw.js` now refuses to install when started
@@ -322,8 +322,13 @@ same address. Everything QR has that MMSA does not, or has changed, is below; no
    does not hold go to MMSA), `qr-away-note.js` (the one-time note before leaving for MMSA), `qr-explore-asma-fit.js`;
    site files `404.html`, `.nojekyll`, `serve.js`, `package.json`.
 6. **QR's checks:** everything in `tools/qr-verify/` (`npm test` runs the set; `mmsa-drift.mjs` by hand).
-7. **Not in any file:** `quranrevival.github.io` is not yet in Firebase Authentication's authorised domains (sign-in on
-   this address waits for the Owner; Asma needs none). The version number is shared with MSA from v11.37 (QR J22).
+7. **Not in any file:** `quranrevival.github.io` is already in Firebase Authentication's authorised domains (the
+   Owner checked, 18 Oct 2026, PCA J110; Asma needs no sign-in). The version number is shared with MSA from v11.37
+   (QR J22).
+8. **The switch to the QR built from MSA:** `.github/workflows/build-from-msa.yml` (MSA's `apps/qr/qr-repo-workflow.yml`
+   at `07db1f1`, the Owner's 3A, PCA J110 step 5). It runs only when started by hand (`workflow_dispatch`; no push
+   trigger), and it only takes effect once Settings → Pages → Source is "GitHub Actions". Until then Pages stays
+   "Deploy from a branch" and serves this frozen main. The way back: set the source to the branch again.
 
 ## Pinned files (owner MMSA)
 
