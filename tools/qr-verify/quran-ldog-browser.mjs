@@ -68,7 +68,7 @@ async function quran(width) {
   await page.evaluate(() => document.getElementById("tabReadBtn").click());
   await page.waitForFunction(() => !document.getElementById("readView").hidden && document.getElementById("ayahPanels").textContent.trim().length > 20, null, { timeout: 15000 }).catch(() => {});
   const read = await page.evaluate(() => ({ sel: ["readSurahSelect", "readAyahSelect"].map((i) => document.getElementById(i)?.value).join(":"), text: document.getElementById("ayahPanels")?.textContent ?? "" }));
-  check(read.sel === "1:1" && /بِسْمِ|ٱللَّهِ|الحمد|ٱلْحَمْدُ/.test(read.text), `${tag} the Read view shows Al-Fatiha (${read.sel})`);
+  check(read.sel === "1:2" && /بِسْمِ|ٱللَّهِ|الحمد|ٱلْحَمْدُ/.test(read.text), `${tag} the Read view shows Al-Fatiha (${read.sel})`);
   // The Āyah card, the way MMSA's audit part 12 opens it: āyah 36:38, then its number badge.
   await page.evaluate(() => { const el = document.getElementById("surahSelect"); el.value = "36"; el.dispatchEvent(new Event("change", { bubbles: true })); });
   await page.waitForFunction(() => document.querySelector('#readView [data-ayah-num-badge^="36:"]') || document.querySelector('#readView [data-word-occurrence^="quran-word-occurrence:v1:36:"]'), null, { timeout: 15000 }).catch(() => {});

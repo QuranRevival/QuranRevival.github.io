@@ -4147,13 +4147,18 @@
   .ayah-connected-studied.is-not-studied { color: #6b4a00; }
   .ayah-connected-studied.is-unchecked { color: #5b5b5b; font-weight: 500; font-style: italic; }
   .ayah-hifz-chip { display: inline-flex; align-items: center; min-height: 1.6rem; padding: 0.2rem 0.6rem; border-radius: 999px; color: #fff; font-size: 0.8rem; font-weight: 600; text-shadow: 0 0 2px rgba(0,0,0,0.35); }
-  /* PCF J26 -- the "Before Al-Fātiḥah" band on the Read page (layout B): Aʿūdhu billāh LEFT, Bismillah RIGHT (the
-     band is dir=ltr, so the order holds in Bangla too), two columns that shrink (min-width:0) and never push the page wide. */
+  /* PCF J26 -- the "Before Al-Fātiḥah" band on the Read page (layout B), two columns that shrink (min-width:0) and never
+     push the page wide. QR J09 (the Owner, 17 Oct): Aʿūdhu billāh RIGHT, Bismillah LEFT, in the Qur'an's reading order
+     (the chips row is dir=rtl, the band itself ltr, so the order holds in Bangla too); the one shown in the reading
+     space is marked (aria-current). */
   .opening-band { direction: ltr; box-sizing: border-box; max-width: 100%; margin: 0.2rem 0 0.8rem; padding: 0.5rem; border: 1px dashed #b8892c; border-radius: 0.7rem; background: rgba(214,166,72,0.14); display: flex; flex-direction: column; gap: 0.4rem; }
   /* PCF J26 audit polish (14 Oct): on a wide screen the band keeps a calm width (about two phone widths), centred. */
   @media (min-width: 900px) { .opening-band { max-width: 48rem; margin-left: auto; margin-right: auto; } } /* j26 band-cap */
   .opening-band-title { font-size: 0.78rem; font-weight: 600; color: #7a5a14; letter-spacing: 0.02em; }
-  .opening-chips { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.4rem; }
+  .opening-chips { direction: rtl; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.4rem; }
+  .opening-chip { direction: ltr; }
+  .opening-chip[aria-current="true"] { border-color: #b8892c; box-shadow: 0 0 0 2px rgba(184,137,44,0.45); background: #fff3d6; }
+  .opening-reading-ar { cursor: pointer; }
   .opening-chip { min-width: 0; min-height: 44px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem; padding: 0.3rem 0.4rem; border: 1px solid #c9b88a; border-radius: 0.6rem; background: #fffaf0; color: #1b1b16; cursor: pointer; font: inherit; }
   .opening-chip-ar { font-family: var(--quran-font); direction: rtl; font-size: 1.1rem; line-height: 1.5; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .opening-chip-name { display: inline-flex; align-items: center; gap: 0.3rem; max-width: 100%; font-size: 0.74rem; color: #4a4a40; }
@@ -7156,6 +7161,7 @@
         Shared by the Read bar's unit chip and the Read contents list's Track button. */
     function openChosenUnitCard() {
       const info = currentUnitInfo();
+      if (info.unitType === "ayah" && openingReading) { openOpeningCard(OPENING_TAAWWUDH_KEY); return; } // QR J09
       if (info.unitType === "ayah") { openAyahActionSheet(`${currentSurahNum}:${currentAyahNum}`); return; }
       openUnitCard(info.unitKey, { surah: currentSurahNum, ayah: currentAyahNum });
     }
@@ -7504,6 +7510,7 @@
     let currentSurahData = null;
     let currentTrackableId = null;
     let currentAyahNum = 1;
+    let openingReading = null; // QR J09 -- "taawwudh" while the Single Ayah view shows Aʿūdhu billāh (cleared by setAyahNum)
     let currentAyahHalf = null; // issue #606 -- "b" = Al-Fātiḥah's displayed Ayah 7 (see setAyahNum())
     let currentChunk = null;
     // Which surah currentChunk was loaded FOR: getRecordsChunk() returns null
@@ -8726,7 +8733,7 @@
           atStart = first && currentUnitNumber() === numbers[0];
           atEnd = last && currentUnitNumber() === numbers[numbers.length - 1];
         } else {
-          atStart = first && currentAyahNum <= 1;
+          atStart = first && (openingReading ? true : currentAyahNum <= 1 && !openingBeforeBismillah()); // QR J09
           atEnd = last && currentAyahNum >= currentSurahData.ayahCount;
         }
       }
@@ -9199,7 +9206,7 @@
     // Issue #606 (decisions 76-77) -- with the count on, internal 1:7 is TWO
     // Ayat: displayed 6 (record ayah:1:7) and displayed 7 (record ayah:1:8).
     // CONTENT stays internal 1:7 (currentAyahNum = 7); the half says which one.
-    function setAyahNum(n, half = null) { currentAyahNum = n; currentAyahHalf = half; }
+    function setAyahNum(n, half = null) { currentAyahNum = n; currentAyahHalf = half; openingReading = null; }
     function fatihaSplitNow() { return currentAyahNum === 7 && fatihaCountApplies(currentSurahNum, fatihaOn()); }
     /** "a" / "b" for the displayed half of internal 1:7 while the count is on, else null. */
     function currentHalf() { return fatihaSplitNow() ? (currentAyahHalf === "b" ? "b" : "a") : null; }
@@ -9209,7 +9216,7 @@
     function ayahRecordKey(surah, ayah, half = null) { return buildUnitKey.ayah(surah, recordAyahFor(surah, ayah, half, fatihaOn())); }
     /** #ayahSelect's option values are RECORD ayahs (8 = displayed 7). */
     function syncAyahSelect() {
-      const v = String(currentRecordAyah());
+      const v = openingReading ? "0" : String(currentRecordAyah());
       if (ayahSelect.querySelector(`option[value="${v}"]`)) ayahSelect.value = v;
     }
     /** The select's value -> currentAyahNum + half. */
@@ -9284,6 +9291,12 @@
           ? [`<option value="7">${ayahLabelFor(currentSurahNum, 7, "a")}</option>`, `<option value="${FATIHA_SEVEN_RECORD_AYAH}">${ayahLabelFor(currentSurahNum, 7, "b")}</option>`]
           : [`<option value="${n}">${ayahLabelFor(currentSurahNum, n)}</option>`]))
         .join("");
+      // QR J09 (the Owner, 17 Oct): Al-Fātiḥah's list starts at āyah 1. The Bismillah and Aʿūdhu billāh are opened from
+      // the "Before Al-Fātiḥah" band; their options stay, hidden, so the closed picker still names what is shown.
+      if (split) {
+        ayahSelect.querySelector('option[value="1"]')?.setAttribute("hidden", "");
+        ayahSelect.insertAdjacentHTML("afterbegin", `<option value="0" hidden>${escapeHtml(t("Aʿūdhu billāh"))}</option>`);
+      }
       // A word option (Al-Fātiḥah's "Bismillah") needs a wider cell than a number.
       document.getElementById("ayahSelectControl")?.classList.toggle("opt-cell-word", fatihaCountApplies(currentSurahNum, fatihaOn()));
     }
@@ -9302,7 +9315,7 @@
       quranWordCardState = closeWordCard(quranWordCardState);
       clearWordCardMounts();
       currentSurahData = await getSurah(currentSurahNum);
-      setAyahNum(1);
+      setAyahNum(fatihaCountApplies(currentSurahNum, fatihaOn()) ? 2 : 1); // QR J09: Al-Fātiḥah opens at āyah 1
       // Owner ask (10 Aug 2026): Prev/Next alone made jumping to, say, ayah
       // 200 of a 286-ayah surah impractical -- a direct Ayah picker next to
       // Surah, same shape as the range unit's own From/To ayah selects.
@@ -16243,8 +16256,10 @@
         Fatiha's ayah 1 literally reads "In the name of Allah..."). On both
         the Read screen (single-ayah and flow) and the Note view. One place
         decides this so all three call sites can never disagree. */
-    function bismillahHtmlFor(surahNum, ayahNum) {
-      if (ayahNum === 1 && surahNum === 1) return openingBandHtml();
+    function bismillahHtmlFor(surahNum, ayahNum, { single = false } = {}) {
+      if (ayahNum === 1 && surahNum === 1) return openingBandHtml(single);
+      // QR J09: in the Single Ayah view the band stays above Al-Fātiḥah's āyah 1, its door to the Bismillah and Aʿūdhu billāh.
+      if (single && surahNum === 1 && ayahNum === 2 && fatihaCountApplies(1, fatihaOn())) return openingBandHtml(true);
       if (ayahNum !== 1 || surahNum === 9 || surahNum === 1) return "";
       return `<div class="ayah-bismillah" dir="rtl" lang="ar">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>`;
     }
@@ -16267,10 +16282,12 @@
       const approachId = endOfUnitApproachId();
       return (approachId && claimedStatusForKey(currentChunk?.entries, unitKey, approachId)) || "not_started";
     }
-    function openingBandHtml() {
+    function openingBandHtml(single = false) {
+      // QR J09: in the Single Ayah view the item shown in the reading space is marked.
+      const shownKey = !single ? null : openingReading === "taawwudh" ? OPENING_TAAWWUDH_KEY : currentAyahNum === 1 ? buildUnitKey.ayah(1, 1) : null;
       const chips = openingItems().map((it) => {
         const st = openingStatusId(it.key);
-        return `<button type="button" class="opening-chip" data-opening-open="${escapeHtml(it.key)}" aria-label="${escapeHtml(t("Open {name}", { name: it.name }))} — ${escapeHtml(statusLabel(st))}">` +
+        return `<button type="button" class="opening-chip" data-opening-open="${escapeHtml(it.key)}"${single ? " data-opening-single" : ""}${it.key === shownKey ? ' aria-current="true"' : ""} aria-label="${escapeHtml(t("Open {name}", { name: it.name }))} — ${escapeHtml(statusLabel(st))}">` +
           `<span class="opening-chip-ar" lang="ar" dir="rtl" data-i18n-skip>${it.ar}</span>` +
           `<span class="opening-chip-name"><span>${escapeHtml(it.name)}</span><i class="opening-chip-dot" data-opening-dot="${st}" style="background:${STATUS_COLORS[st] ?? STATUS_COLORS.not_started}"></i></span></button>`;
       }).join("");
@@ -16295,9 +16312,29 @@
       intro.backLabel = t("Back");
       openAyahActionSheet(opening ? unitKey : "1:1", null, intro);
     }
+    /** QR J09 (the Owner, 17 Oct, choice B): Aʿūdhu billāh in the reading space, alone, the way the Bismillah is shown. */
+    const OPENING_TAAWWUDH_BN = "আমি অভিশপ্ত শয়তান থেকে আল্লাহর কাছে আশ্রয় চাই।";
+    function taawwudhReadingHtml() {
+      const tr = translationLangs().map((lang) => {
+        const text = lang === "bn" ? OPENING_TAAWWUDH_BN : lang === "en" ? OPENING_TAAWWUDH_EN : "";
+        return text ? `<div class="${lang === "bn" ? "ayah-translation ayah-translation-bn" : "ayah-translation"}"${lang === "bn" ? ' lang="bn"' : ""}>${escapeHtml(text)}</div>` : "";
+      }).join("");
+      return `<div class="ayah-arabic opening-reading-ar" dir="rtl" lang="ar" data-opening-card="${escapeHtml(OPENING_TAAWWUDH_KEY)}" role="button" tabindex="0" title="${escapeHtml(t("Open {name}", { name: t("Aʿūdhu billāh") }))}">${OPENING_TAAWWUDH_AR}</div>${tr}`;
+    }
     document.addEventListener("click", (e) => {
+      const card = e.target?.closest?.("[data-opening-card]");
+      if (card) { openOpeningCard(card.dataset.openingCard); return; }
       const btn = e.target?.closest?.("[data-opening-open]");
-      if (btn) openOpeningCard(btn.dataset.openingOpen);
+      if (!btn) return;
+      // QR J09: in the Single Ayah view the first tap shows the item in the reading space; a tap on the one shown opens its card.
+      if (btn.hasAttribute("data-opening-single") && btn.getAttribute("aria-current") !== "true") {
+        stopDrill();
+        setAyahNum(1);
+        if (btn.dataset.openingOpen === OPENING_TAAWWUDH_KEY) openingReading = "taawwudh";
+        renderStudyScreen(); renderWheel();
+        return;
+      }
+      openOpeningCard(btn.dataset.openingOpen);
     });
 
     /** Word-by-word panel: "auto" follows the language above; otherwise the owner's explicit choice wins (owner request, 5 Aug 2026 -- an explicit fallback alongside the automatic behaviour, not instead of it). */
@@ -22687,10 +22724,12 @@
       // the Unit Card (readUnitChip's own click handler decides that).
       readUnitChip.hidden = isMushaf;
       if (!isMushaf) {
-        const chipText = unitChipText(unitInfo);
+        // QR J09: while Aʿūdhu billāh is in the reading space, the chip names it (and opens its card).
+        const chipLabel = openingReading && unitInfo.unitType === "ayah" ? t("Aʿūdhu billāh") : null;
+        const chipText = chipLabel ?? unitChipText(unitInfo);
         readUnitChip.querySelector(".read-unit-chip-text").textContent = chipText;
-        readUnitChip.setAttribute("aria-label", t("Open {unit}", { unit: unitInfo.label }));
-        readUnitChip.title = unitInfo.label;
+        readUnitChip.setAttribute("aria-label", t("Open {unit}", { unit: chipLabel ?? unitInfo.label }));
+        readUnitChip.title = chipLabel ?? unitInfo.label;
       }
 
       // 30 Aug 2026 round -- "place a button on both READ and NOTE VIEW"
@@ -22734,14 +22773,35 @@
       } else {
         const ayah = currentSurahData.ayahs.find((a) => a.ayah === currentAyahNum);
         if (!ayah) return;
+        if (openingReading === "taawwudh" && currentSurahNum === 1) {
+          // QR J09 -- Aʿūdhu billāh alone in the reading space (no āyah: no word tools, no ⋮ menu; its text opens its card).
+          ayahPosition.textContent = `${t("Surah {n}", { n: num(1) })} — ${t("Aʿūdhu billāh")}`;
+          syncAyahSelect();
+          prevAyahBtn.disabled = true;
+          nextAyahBtn.disabled = false;
+          ayahPanels.innerHTML = openingBandHtml(true) + taawwudhReadingHtml();
+          delete ayahPanels.dataset.ayahCollapsibleFor;
+          if (ayahPanels.dataset.shownAyah !== "1:taawwudh") { ayahPanels.scrollTop = 0; ayahPanels.dataset.shownAyah = "1:taawwudh"; }
+          readQuickMenuSlot.innerHTML = "";
+          renderPersistentWordCard();
+          renderListeningControls();
+          renderUnitLabel();
+          renderReadTransport();
+          renderUnitSpanReadout();
+          renderUnitNav();
+          syncReadPickers();
+          syncReadNotes();
+          return;
+        }
         ayahPosition.textContent = fatihaCountApplies(currentSurahNum, fatihaOn()) && currentAyahNum === 1
           ? t("Surah {surah} — Bismillah", { surah: num(currentSurahNum) })
           : isUnnumberedBismillah(currentSurahNum, currentAyahNum) ? t("Surah {surah} — Bismillah", { surah: num(currentSurahNum) })
           : t("Surah {surah} — Ayah {ayah} of {total}", { surah: num(currentSurahNum), ayah: ayahLabelFor(currentSurahNum, currentAyahNum, currentHalf()), total: num(displayAyahCount(currentSurahNum, currentSurahData.ayahCount)) });
         syncAyahSelect();
-        prevAyahBtn.disabled = currentAyahNum <= 1 && currentHalf() !== "b";
+        // QR J09: from the Bismillah, ⏮ goes back to Aʿūdhu billāh.
+        prevAyahBtn.disabled = currentAyahNum <= 1 && currentHalf() !== "b" && !(currentSurahNum === 1 && fatihaCountApplies(1, fatihaOn()));
         nextAyahBtn.disabled = currentAyahNum >= currentSurahData.ayahCount && currentHalf() !== "a";
-        ayahPanels.innerHTML = bismillahHtmlFor(currentSurahNum, currentAyahNum) + layoutAParts(ayah, panels, {
+        ayahPanels.innerHTML = bismillahHtmlFor(currentSurahNum, currentAyahNum, { single: true }) + layoutAParts(ayah, panels, {
           tajweedOn: tajweedToggle.checked,
           langs: translationLangs(),
           wbwLangs: wbwLangs(),
@@ -23470,7 +23530,12 @@
     });
 
     // Issue #606 -- with the Al-Fātiḥah count on, internal 1:7 is two stops: 6 then 7.
+    /** QR J09: on Al-Fātiḥah's Bismillah (count on), one step back is Aʿūdhu billāh. */
+    function openingBeforeBismillah() { return !openingReading && currentSurahNum === 1 && currentAyahNum === 1 && fatihaCountApplies(1, fatihaOn()); }
     function stepAyahBy(dir) {
+      // QR J09 -- the reading order before Al-Fātiḥah: Aʿūdhu billāh, the Bismillah, then āyah 1.
+      if (openingReading) { if (dir > 0) { setAyahNum(1); return true; } return false; }
+      if (dir < 0 && openingBeforeBismillah()) { openingReading = "taawwudh"; return true; }
       const split = fatihaCountApplies(currentSurahNum, fatihaOn());
       if (split && dir > 0 && currentAyahNum === 7 && currentHalf() === "a") { setAyahNum(7, "b"); return true; }
       if (split && dir < 0 && currentAyahNum === 7 && currentHalf() === "b") { setAyahNum(7, "a"); return true; }
@@ -23479,8 +23544,8 @@
       setAyahNum(target, split && target === 7 ? (dir < 0 ? "b" : "a") : null);
       return true;
     }
-    prevAyahBtn.addEventListener("click", () => { if (currentAyahNum > 1 || currentHalf() === "b") { stopDrill(); stepAyahBy(-1); renderStudyScreen(); renderWheel(); } });
-    nextAyahBtn.addEventListener("click", () => { if (currentAyahNum < currentSurahData.ayahCount || currentHalf() === "a") { stopDrill(); stepAyahBy(1); renderStudyScreen(); renderWheel(); } });
+    prevAyahBtn.addEventListener("click", () => { if (currentAyahNum > 1 || currentHalf() === "b" || openingBeforeBismillah()) { stopDrill(); stepAyahBy(-1); renderStudyScreen(); renderWheel(); } });
+    nextAyahBtn.addEventListener("click", () => { if (currentAyahNum < currentSurahData.ayahCount || currentHalf() === "a" || openingReading) { stopDrill(); stepAyahBy(1); renderStudyScreen(); renderWheel(); } });
     // Issue #325 point 2 -- tapping the top-bar reference opens the "This
     // page" card, claiming the printed page as one unit (Owner decision 3).
     // dataset.page is stamped by updateMushafPageRef() only while a real
