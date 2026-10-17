@@ -42,9 +42,9 @@ with `PCA ▸` lines in your jobs and by direct message into your session.
 - **One shared sign-in and one database for all apps**, so a student's progress follows them
   from app to app. Keep using the same Firebase project, the same Rules, the same
   records/activity paths, unit keys and person-id shapes. Never create a second database.
-- Sign-in on this new address needs the owner to add `quranrevival.github.io` to Firebase
-  Authentication's authorised domains. Ask the PCA to give the owner the steps when you
-  reach that point (Asma itself needs no sign-in).
+- `quranrevival.github.io` is already in Firebase Authentication's authorised domains (the
+  owner checked, 18 Oct 2026, PCA J110), so sign-in works on this address (Asma itself needs
+  no sign-in).
 - No student may lose anything. The MMSA app keeps working exactly as it is until the owner
   decides otherwise.
 
