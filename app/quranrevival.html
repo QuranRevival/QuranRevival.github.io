@@ -10,7 +10,7 @@
        randomly." The phone heading's separators: a line or a dot, picked at
        random each time the page opens (the CSS under .wheel-heading::before). -->
   <script>document.documentElement.setAttribute('data-head-sep', Math.random() < 0.5 ? 'line' : 'dot');</script>
-<title>QuranRevival — Phase 4/5</title>
+<title>QuranRevival</title>
 <style>
   /* Shell round 7 (12 Aug 2026) -- this page is now a real app shell rather
      than a plain scrolling document: a header, a stage that STRETCHES to
@@ -6742,7 +6742,7 @@
     import { attachTaglineScroll } from "./js/tagline-scroll.js";
     import { adoptAppLangFromUserIndex, mountSyncedAppLangControl } from "./js/lang-sync.js";
     import { showBootSplash, showQuranSplash } from "./js/splash.js";
-    import { APP_VERSION } from "./js/version.js";
+    import { APP_VERSION } from "./js/qr-version.js"; // QR J21: QR's own number (was MMSA's v11.04 from the copy point)
 
     document.getElementById("appVersion").textContent = `v${APP_VERSION}`;
 
